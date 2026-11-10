@@ -1,0 +1,842 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Análise de Pagamentos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: painel de conferência em coluna única. Período no topo, calendário do mês com cor por dia, cartões Crédito/Débito/Pix com Stone x Ssotica x Diferença. */
+:root{--bg:#f2f4f3;--sf:#fff;--ink:#10231f;--mu:#5d6f6a;--ln:#dbe2df;--ac:#0b5d4f;--acx:#fff;--ok:#1a7f4b;--okb:#e1f3e8;--bad:#b3342b;--badb:#fbe6e3;--wn:#8a5a00;--wnb:#fbefd5;--nb:#e8ecea;
+--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1715;--sf:#14211e;--ink:#e6efec;--mu:#94a7a1;--ln:#25352f;--ac:#3dbd9f;--acx:#06211b;--ok:#5fd394;--okb:#12301f;--bad:#ff8f84;--badb:#3a1b19;--wn:#e5b04a;--wnb:#3a2d10;--nb:#1b2926;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1715;--sf:#14211e;--ink:#e6efec;--mu:#94a7a1;--ln:#25352f;--ac:#3dbd9f;--acx:#06211b;--ok:#5fd394;--okb:#12301f;--bad:#ff8f84;--badb:#3a1b19;--wn:#e5b04a;--wnb:#3a2d10;--nb:#1b2926;color-scheme:dark}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans)}
+
+h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.2px}
+h2{font-size:14px;font-weight:600;margin:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.top select{width:auto;min-width:0;max-width:100%}
+nav{display:flex;gap:2px;border-bottom:1px solid var(--ln);overflow-x:auto}
+nav button{flex:none;padding:10px 14px;border:0;border-bottom:3px solid transparent;background:none;color:var(--mu);font:inherit;font-weight:500;cursor:pointer}
+nav button.on{color:var(--ink);border-bottom-color:var(--ac)}
+.cd{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.mu{color:var(--mu);font-size:13px}
+.mono,.r span+span{font-family:var(--mono);font-variant-numeric:tabular-nums}
+input,select,button.b,button.s{font:inherit;padding:9px 10px;border:1px solid var(--ln);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+button.b{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600;cursor:pointer}
+button.s{width:auto;cursor:pointer;background:var(--sf)}
+button.x{background:none;border:0;color:var(--bad);cursor:pointer;font-size:16px;padding:2px 6px}
+label{display:block;font-size:12px;color:var(--mu);margin-bottom:3px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pb{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--ln);border-radius:8px;overflow:hidden;background:var(--sf)}
+.seg button{border:0;background:none;color:var(--mu);padding:9px 14px;font:inherit;font-weight:500;cursor:pointer}
+.seg button.on{background:var(--ac);color:var(--acx)}
+.pb .nv{display:flex;gap:6px;align-items:end;flex:1;min-width:200px}
+.pb .nv input{flex:1}
+.hero{gap:12px}
+.hn{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hn div{min-width:0}.hn .mono{font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.stt{padding:10px 12px;border-radius:8px;font-weight:600}
+.stt.ok{background:var(--okb);color:var(--ok)}.stt.bad{background:var(--badb);color:var(--bad)}.stt.n{background:var(--nb);color:var(--mu);font-weight:500}.stt.wn{background:var(--wnb);color:var(--wn)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .h{font-size:11px;color:var(--mu);text-align:center}
+.cal button{min-height:48px;border:1px solid transparent;border-radius:6px;padding:4px 2px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;font:inherit;font-size:12px;cursor:pointer;background:var(--nb);color:var(--mu)}
+.cal button small{font-family:var(--mono);font-size:10px;line-height:1}
+.cal button.ok{background:var(--okb);color:var(--ok)}.cal button.bad{background:var(--badb);color:var(--bad)}
+.hn .mono{font-size:clamp(14px,4.6vw,20px);white-space:nowrap}.grp{border:1px solid var(--ln);border-radius:10px;background:var(--sf);padding:0}.grp>summary{padding:14px;font-weight:600;cursor:pointer;min-height:44px;display:flex;align-items:center}.grp[open]>summary{border-bottom:1px solid var(--ln)}.grp>section{border:0;border-radius:0}.grp>section+section{border-top:1px solid var(--ln)}.demo{background:#fff3d6;color:#8a5a00;border-radius:8px;padding:10px 12px;font-size:13px}.ck{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--ln);font-size:14px}.ck:first-of-type{border-top:0}.ck .ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700}.ck .y{background:var(--okb);color:var(--ok)}.ck .n{background:var(--badb);color:var(--bad)}.cal button.pend{background:#fff3d6;color:#8a5a00}.dl button.pend{background:#fff3d6;color:#8a5a00}.cal button.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.cal i{visibility:hidden}.li.fp{border-left:4px solid #7c3aed;padding-left:10px;border-radius:6px;margin:3px 0;background:#efe5ff;color:#3b1a7a}.chip.pu{background:#7c3aed;color:#fff}:root[data-theme="dark"] .li.fp{background:#2c1b52;color:#e2d4ff;border-color:#a78bfa}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .li.fp{background:#2c1b52;color:#e2d4ff;border-color:#a78bfa}}.li.fp .mu{color:inherit;opacity:.8}.li.fy{border-left:4px solid #d4a017;padding-left:10px;border-radius:6px;margin:3px 0;background:#fff3c4;color:#4a3500}:root[data-theme="dark"] .li.fy{background:#4a3b0c;color:#ffe9a6}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .li.fy{background:#4a3b0c;color:#ffe9a6}}.li{flex-wrap:wrap}.li .acs{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap}.cal button.ot,.dl button.ot{background:#e3ecfd;color:#2f62d6}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cal button.ot,:root:not([data-theme="light"]) .dl button.ot{background:#16264a;color:#7fa3ff}}
+details.dt{margin:3px 0}details.dt>summary{list-style:none;cursor:pointer}details.dt>summary::-webkit-details-marker{display:none}
+.db{padding:8px 10px 10px;border:1px solid var(--ln);border-top:0;border-radius:0 0 8px 8px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.db .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px}.db .kv span:nth-child(odd){color:var(--mu)}
+.db .sub{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--ln)}
+.db button.dl2{border:1px solid var(--bad);color:var(--bad);background:none;border-radius:8px;padding:7px 10px;font:inherit;cursor:pointer;align-self:flex-start}
+.lgb{font:inherit;font-size:13px;color:var(--ink);background:var(--sf);border:1px solid var(--ln);border-radius:999px;padding:6px 12px;min-height:36px;cursor:pointer}.lgb.on{border-color:var(--ink);font-weight:600}.lgb i{margin-right:6px}.cd>h2,.cd>.fh>h2{cursor:pointer;user-select:none}.cd>h2::after,.cd>.fh>h2::after{content:'▾';margin-left:8px;color:var(--mu);font-size:12px}.cd.col>h2::after,.cd.col>.fh>h2::after{content:'▸'}.cd.col>*:not(h2):not(.fh){display:none}.cd.col>.fh>*:not(h2){display:none}.lg{display:flex;gap:14px;font-size:12px;color:var(--mu)}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.li.cn{border-left:4px solid var(--mu);padding-left:10px;border-radius:6px;margin:3px 0;background:var(--nb);color:var(--mu)}.li.cn .mono{text-decoration:line-through}
+.li.fm{border-left:4px solid #c26a12;padding-left:10px;border-radius:6px;margin:3px 0;background:#fdeed9}
+:root[data-theme="dark"] .li.fm{background:#3a2a12;border-color:#f0a24f}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .li.fm{background:#3a2a12;border-color:#f0a24f}}
+.li.fs,.li.fz{border-left:4px solid;padding-left:10px;border-radius:6px;margin:3px 0}.li.fs{background:var(--okb);border-color:var(--ok)}.li.fz{background:#e3ecfd;border-color:#2f62d6}
+:root[data-theme="dark"] .li.fz{background:#16264a;border-color:#7fa3ff}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .li.fz{background:#16264a;border-color:#7fa3ff}}
+.dl{display:flex;flex-direction:column;gap:4px}.dl button{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;text-align:left;border:1px solid transparent;border-radius:6px;padding:8px 10px;font:inherit;font-size:13px;cursor:pointer;background:var(--nb);color:var(--mu)}
+.dl button.ok{background:var(--okb);color:var(--ok)}.dl button.bad{background:var(--badb);color:var(--bad)}.dl button.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.dl b{font-family:var(--mono);font-size:13px}.dl .v{color:var(--mu);font-size:12px;font-family:var(--mono)}
+
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px}
+.chip.ok{background:var(--okb);color:var(--ok)}.chip.bad{background:var(--badb);color:var(--bad)}.chip.n{background:var(--nb);color:var(--mu)}.chip.wn{background:var(--wnb);color:var(--wn)}
+.fh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.r{display:grid;grid-template-columns:minmax(64px,1.1fr) repeat(3,1fr);gap:6px;padding:6px 0;border-top:1px solid var(--ln);font-size:13px;align-items:baseline}
+.r span+span{text-align:right;font-size:12.5px}
+.r.hd{border-top:0;color:var(--mu);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-bottom:2px;font-family:var(--sans)}
+.r.hd span+span{font-family:var(--sans);font-size:11px}
+.r.t{font-weight:600}
+.r .ok{color:var(--ok)}.r .bad{color:var(--bad)}
+.li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--ln);font-size:13px}
+.li:first-child{border-top:0}.li>span:first-child{min-width:0;overflow-wrap:anywhere}
+.li .mono{white-space:nowrap;text-align:right}
+.bad{color:var(--bad)}.ok{color:var(--ok)}.wn{color:var(--wn)}
+.dz{border:2px dashed var(--ln);border-radius:10px;padding:18px 14px;text-align:center;background:var(--bg)}
+.dz strong{display:block;margin-bottom:4px}
+details summary{cursor:pointer;color:var(--mu);font-size:13px}
+.steps{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--mu)}
+.steps b{color:var(--ink)}
+#tt{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:688px;margin:0 auto;background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;z-index:9;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+/* Layout: menu lateral azul-marinho, barra de topo com loja, alerta, entradas acumuladas, cartões por área e conferência. */
+:root{--bg:#eef1f6;--sf:#fff;--ink:#14213a;--mu:#5b6882;--ln:#dbe1ec;--ac:#244fa8;--acx:#fff;--nb:#e8ecf3;--sb:#13213a;--sbx:#b9c4da;--sbh:#1f3358;--sba:#6f9bff;--st:#1a7f4b;--ss:#2f62d6;--gr:#8b97ad}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1320;--sf:#141d2e;--ink:#e6ebf5;--mu:#9aa8c2;--ln:#25314a;--ac:#7fa3ff;--acx:#0b1a38;--nb:#1b2740;--sb:#0a1020;--sbh:#16233f;--st:#5fd394;--ss:#7fa3ff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c1320;--sf:#141d2e;--ink:#e6ebf5;--mu:#9aa8c2;--ln:#25314a;--ac:#7fa3ff;--acx:#0b1a38;--nb:#1b2740;--sb:#0a1020;--sbh:#16233f;--st:#5fd394;--ss:#7fa3ff;color-scheme:dark}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--sf)}
+#app{display:flex;align-items:flex-start;min-height:100vh}
+#sb{width:244px;flex:none;background:var(--sb);color:var(--sbx);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;z-index:30}
+.brand{display:flex;gap:12px;align-items:center;padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.08);color:#fff}
+.brand i{font-style:normal;font-weight:600;width:38px;height:38px;border-radius:8px;background:var(--ss);color:#fff;display:grid;place-items:center;font-size:14px}
+.brand b{display:block;font-size:14px;line-height:1.2}.brand small{color:var(--sbx);font-size:12px}
+#nav{display:flex;flex-direction:column;padding:10px 0}
+#nav button{display:flex;align-items:center;gap:12px;padding:12px 20px;border:0;border-left:3px solid transparent;background:none;color:var(--sbx);font:inherit;font-size:14px;text-align:left;cursor:pointer;width:100%}
+#nav button:hover{background:var(--sbh);color:#fff}
+#nav button.on{background:var(--sbh);color:#fff;border-left-color:var(--sba);font-weight:600}
+#nav svg{flex:none}
+#nav hr{border:0;border-top:1px solid rgba(255,255,255,.08);margin:8px 18px;width:auto}
+#mn{flex:1;min-width:0}
+.tb{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--sf);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:12px;height:56px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+.tb h1{font-size:17px}.tb .sp{flex:1}
+.hm{width:40px;height:40px;border:1px solid var(--ln);border-radius:8px;background:var(--sf);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}
+main{padding-block:18px 64px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+#v>div{max-width:1120px;margin:0 auto}
+#v>div.pgn{max-width:860px}
+#ov{display:none}
+@media (max-width:860px){#sb{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 30px rgba(0,0,0,.4)}#app.open #sb{transform:none}#app.open #ov{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:25}}
+@media (min-width:861px){#app.nosb #sb{display:none}}
+.alert{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 16px;border-radius:8px;font-weight:500;border:1px solid var(--bad);background:var(--badb);color:var(--bad)}
+.alert.ok{border-color:var(--ok);background:var(--okb);color:var(--ok)}
+.alert button{width:auto;border:1px solid currentColor;background:none;color:inherit;padding:6px 12px;border-radius:6px;font:inherit;cursor:pointer}
+.kg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.kpi{background:var(--sf);border:1px solid var(--ln);border-top:4px solid var(--gr);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi.ok{border-top-color:var(--ok)}.kpi.bad{border-top-color:var(--bad)}.kpi.ok,.kpi.bad{color:var(--ink)}
+.kt{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);font-weight:600}
+.kv2{font:600 clamp(20px,2.2vw,26px)/1.15 var(--mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ks{font-size:13px;color:var(--mu)}.kb{display:flex;gap:8px;margin-top:4px}
+.chip.date{background:var(--nb);color:var(--mu);font-weight:500;align-self:flex-start}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:980px){.two{grid-template-columns:minmax(0,1fr)}}
+.acg{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:20px}
+@media (max-width:900px){.acg{grid-template-columns:minmax(0,1fr)}}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bl{display:flex;justify-content:space-between;gap:8px;font-size:13px;align-items:baseline}
+.pbar2{height:10px;border-radius:6px;background:var(--nb);overflow:hidden}.pbar2 i{display:block;height:100%;border-radius:6px}
+.chw{position:relative;min-width:0}
+.chw svg{display:block;width:100%;height:auto}
+.chw text{fill:var(--mu);font:11px var(--mono)}
+.chw .gr{stroke:var(--ln);stroke-width:1}
+.chw .l1{stroke:var(--st);fill:none;stroke-width:2;stroke-linejoin:round}.chw .l2{stroke:var(--ss);fill:none;stroke-width:2;stroke-linejoin:round}
+.chw .a1{fill:var(--st);opacity:.13}.chw .a2{fill:var(--ss);opacity:.13}
+.chw .d1{fill:var(--st);stroke:var(--sf);stroke-width:2}.chw .d2{fill:var(--ss);stroke:var(--sf);stroke-width:2}
+.chw .cl{stroke:var(--mu);stroke-width:1;stroke-dasharray:3 3}
+#ct{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.5;white-space:nowrap;z-index:5}
+.lgd{display:flex;gap:16px;font-size:12px;color:var(--mu);flex-wrap:wrap}.lgd i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.rl{cursor:pointer}.rl:hover{background:var(--nb)}
+.sel2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sel2 select{width:auto}
+</style>
+<div id="app"><aside id="sb" aria-label="Menu"><div class="brand"><i>AP</i><span><b>Análise de Pagamentos</b><small>Stone × Ssotica</small></span></div><nav id="nav" aria-label="Seções"></nav><div style="margin-top:auto;padding:16px 20px"><a href="../" style="color:#b9c4da;text-decoration:none;font-size:14px">← Página inicial</a></div></aside><div id="ov" onclick="tgSb()"></div>
+<div id="mn"><header class="tb"><button class="hm" onclick="tgSb()" aria-label="Abrir ou fechar o menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h1 id="pg">Painel</h1><span class="sp"></span><div id="ljbox"></div></header><main><div id="v"></div></main></div></div>
+<div id="tt" role="status" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const fm=n=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const fn=n=>Math.abs(n)<0.005?'—':n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fs=n=>Math.abs(n)<0.005?'—':(n>0?'+':'−')+fn(Math.abs(n));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const fd=d=>d.split('-').reverse().join('/');
+const MN=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const mname=m=>MN[+m.slice(5)-1]+' de '+m.slice(0,4);
+const short=b=>b==='Mastercard'?'Master':b==='American Express'?'Amex':b||'Sem bandeira';
+const isCard=m=>m==='Débito'||m==='Crédito';
+const z=v=>Math.abs(v)<0.005;
+let tmr;const msg=t=>{const e=$('#tt');e.textContent=t;e.hidden=false;clearTimeout(tmr);tmr=setTimeout(()=>{e.hidden=true},6000)};
+let D=[];try{D=JSON.parse(localStorage.getItem('pag1')||'[]')}catch(e){}
+D=D.map(e=>({...e,loja:e.loja||''}));
+const save=()=>{try{localStorage.setItem('pag1',JSON.stringify(D))}catch(e){}};
+let T=[];try{T=JSON.parse(localStorage.getItem('pag2')||'[]')}catch(e){}
+const normT=a=>{const k=t=>[t.month,t.label||'',t.method||'',t.brand||''].join('|'),g={};
+a.forEach(t=>{const q=t.month+'|'+(t.loja||'')+'|'+k(t);if(!g[q]||t.amount>g[q].amount)g[q]=t});
+let r=Object.values(g);
+const nm={};r.filter(t=>t.loja).forEach(t=>{const q=k(t);nm[q]=(nm[q]||0)+t.amount});
+r=r.filter(t=>t.loja||!(nm[k(t)]!==undefined&&Math.abs(t.amount-nm[k(t)])<0.015));
+return r};
+T=normT(T);
+let C={};try{C=JSON.parse(localStorage.getItem('pag3')||'{}')}catch(e){}
+const saveC=()=>{try{localStorage.setItem('pag3',JSON.stringify(C))}catch(e){}};
+const saveT=()=>{T=normT(T);try{localStorage.setItem('pag2',JSON.stringify(T))}catch(e){}};
+let tab='painel',sel=iso(new Date()),fp='mes',DL={save:async({filename:fn0,data:d0})=>{const b=new Blob([d0]),u=URL.createObjectURL(b),k=document.createElement('a');k.href=u;k.download=fn0;document.body.appendChild(k);k.click();k.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}},files=[],tolD=1;
+const TABS=[['painel','Painel'],['ent','Entradas'],['mum','Mumbuca'],['pix','Pix'],['car','Cartões'],['out','Contas pagas'],['dados','Arquivos e backup']],IMPT=['ent','mum','pix','car','out'];
+const DEMO_BUILD=false;let OF='all';try{OF=localStorage.getItem('pag6')||'all'}catch(e){}
+const BR=['Mastercard','Visa','Elo','American Express'];
+const LJ=['OH! ICARAÍ','OH! CENTRO','OH! ITAIPUAÇU','ART ÓTICA','CENTRO ÓTICO MARICÁ','CENTRO ÓTICO RIO BONITO','CENTRO ÓTICO TANGUÁ'];
+let LF='';const inL=e=>!LF||e.loja===LF,ljName=l=>l||'Sem loja';
+const gl=n=>{const t=n.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();return /icarai/.test(t)?LJ[0]:/itaipuacu/.test(t)?LJ[2]:/maric/.test(t)?LJ[4]:/rio.?bonito/.test(t)?LJ[5]:/tangu/.test(t)?LJ[6]:/\bart\b/.test(t)?LJ[3]:/centro/.test(t)?LJ[1]:''};
+const cred=e=>e.source==='Ssotica'&&/^\s*(vendas\s+credi[aá]rio|carn[eê])\s*$/i.test(e.cat||'');
+const nrm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const isCM=e=>e.type==='in'&&e.source==='Stone'&&e.method==='Pix'&&!e.canc&&/centro\W+(?:\w+\W+){0,2}maric/.test(nrm((e.desc||'')+' '+(e.cli||'')));
+const isEst=e=>/estorn/i.test((e.desc||'')+' '+(e.cat||'')+' '+(e.cli||''));
+const ins=()=>{const all=D.filter(e=>e.type==='in'&&inL(e)&&!cred(e)&&!e.canc&&!isEst(e)),det=new Set(all.filter(e=>e.source==='Ssotica'&&!e.agg&&!e.adj).map(e=>e.date+'|'+e.loja+'|'+grp(e)));return all.filter(e=>!(e.agg&&det.has(e.date+'|'+e.loja+'|'+grp(e))))},aggSet=()=>new Set(ins().filter(e=>e.agg).map(e=>e.date+'|'+e.loja+'|'+grp(e))),exps=()=>D.filter(e=>e.type==='out'&&inL(e)&&!e.canc&&!isEst(e));
+
+/* ---------- período ---------- */
+const per=()=>{const m=sel.slice(0,7);return{m,pf:e=>fp==='dia'?e.date===sel:e.date.startsWith(m),label:fp==='dia'?fd(sel):mname(m)}};
+function shift(n){const dt=new Date(sel+'T12:00:00');if(fp==='dia')dt.setDate(dt.getDate()+n);else{dt.setDate(1);dt.setMonth(dt.getMonth()+n)}sel=iso(dt);render()}
+function pbar(){const p=per();
+return `<div class="pb"><div class="seg" role="group" aria-label="Período"><button class="${fp==='dia'?'on':''}" onclick="fp='dia';render()">Dia</button><button class="${fp==='mes'?'on':''}" onclick="fp='mes';render()">Mês</button></div>
+<div class="nv"><button class="s" aria-label="Anterior" onclick="shift(-1)">‹</button>${fp==='dia'?`<input type="date" id="pd" aria-label="Dia" value="${sel}" onchange="if(this.value){sel=this.value;render()}">`:`<input type="month" id="pd" aria-label="Mês" value="${p.m}" onchange="if(this.value){sel=this.value+'-01';render()}">`}<button class="s" aria-label="Próximo" onclick="shift(1)">›</button></div></div>`}
+
+/* ---------- cálculo Stone x Ssotica ---------- */
+function calc(pf){const m=sel.slice(0,7),tr0=fp==='mes'?T.filter(t=>t.month===m&&(!LF||t.loja===LF)):[],hasDay=ins().some(e=>e.source==='Ssotica'&&!e.adj&&e.date.startsWith(m)&&['Pix','Débito','Crédito'].includes(e.method)),tr=hasDay?[]:tr0,useT=tr.length>0,l=ins().filter(pf).filter(e=>!(useT&&e.source==='Ssotica')).concat(tr.map(t=>({...t,source:'Ssotica',date:m+'-01'}))),BX=[...BR,''];
+const g=(src,meth)=>{const r={t:0};BX.forEach(b=>r[b]=0);l.filter(e=>e.source===src&&(meth==='Outros'?!['Pix','Débito','Crédito','Mumbuca','Dinheiro','Boleto'].includes(e.method):e.method===meth)).forEach(e=>{r[isCard(e.method)?(e.brand||''):'']+=e.amount;r.t+=e.amount});return r};
+const S={};['Crédito','Débito','Pix','Outros'].forEach(k=>S[k]={Stone:g('Stone',k),Ssotica:g('Ssotica',k)});
+const TT=s=>['Crédito','Débito','Pix'].reduce((t,k)=>t+S[k][s].t,0);
+return{n:l.length,L:l,S,BX,useT,st:TT('Stone'),ss:TT('Ssotica'),oth:S.Outros.Ssotica.t+S.Outros.Stone.t}}
+const chip=(a,b)=>!a&&!b?'<span class="chip n">Sem dados</span>':z(a-b)?'<span class="chip ok">Bate</span>':a>b?`<span class="chip bad">Sobra ${fn(a-b)}</span>`:`<span class="chip bad">Faltam ${fn(b-a)}</span>`;
+function forma(k,c){const a=c.S[k].Stone,b=c.S[k].Ssotica,card=k==='Crédito'||k==='Débito';
+const cols=card?c.BX.filter(x=>x!==''||a['']||b['']):[];
+const row=(n,x,y,t)=>{const d=x-y;return `<div class="r${t?' t':''}"><span>${n}</span><span>${fn(x)}</span><span>${fn(y)}</span><span class="${z(d)?(x||y?'ok':''):'bad'}">${fs(d)}</span></div>`};
+return `<section class="cd"><div class="fh"><h2>${k==='Outros'?'Sem forma reconhecida':k}</h2>${chip(a.t,b.t)}</div>
+<div><div class="r hd"><span></span><span>Stone</span><span>Ssotica</span><span>Dif.</span></div>${cols.map(x=>row(short(x),a[x],b[x])).join('')}${row(card?'Total':k==='Pix'?'Pix':'Total',a.t,b.t,card)}</div>${k==='Outros'?outrosLista(c):''}</section>`}
+function outrosLista(c){const l=c.L.filter(e=>e.id&&!['Pix','Débito','Crédito','Mumbuca','Dinheiro','Boleto'].includes(e.method)).sort((x,y)=>x.date.localeCompare(y.date));if(!l.length)return '';
+return `<span class="mu">Lançamentos sem forma de pagamento reconhecida (dinheiro e boleto ficam fora desta lista). Se for Pix, toque nele e use "Alterar forma de pagamento".</span>${l.map(e=>`<details class="dt"><summary class="li ${e.source==='Stone'?'fs':e.source==='Mumbuca'?'fm':'fz'}"><span>${fd(e.date)} · ${esc(e.source)} · <b>${esc(e.method)}</b><br><span class="mu">${esc(e.desc||e.cli||'')}</span></span><span class="mono"><b>${fn(e.amount)}</b> ›</span></summary>${detBody(e)}</details>`).join('')}`}
+
+function mumbucaCard(c){const A=c.L.filter(e=>e.source==='Mumbuca'&&e.method==='Mumbuca'),B=c.L.filter(e=>e.source==='Ssotica'&&e.method==='Mumbuca'),ta=A.reduce((a,e)=>a+e.amount,0),tb=B.reduce((a,e)=>a+e.amount,0);
+
+const ua=new Set(A),ub=new Set(B),ex=[];for(const a of A)for(const b of B){if((a.loja||'')!==(b.loja||'')||cents(a)!==cents(b))continue;const dd=Math.abs(dn(a.date)-dn(b.date));if(dd>tolD)continue;ex.push([dd,-nsc(a,b),a,b])}
+ex.sort((x,y)=>x[0]-y[0]||x[1]-y[1]);let ok=0;for(const q of ex){if(ua.has(q[2])&&ub.has(q[3])){ua.delete(q[2]);ub.delete(q[3]);ok++}}
+const oa=A.filter(e=>ua.has(e)),ob=B.filter(e=>ub.has(e)),d=ta-tb;
+const it=[...oa.map(e=>`<div class="li"><span><b>Mumbuca de ${fm(e.amount)} não lançado no Ssotica</b><br><span class="bad">Recebido na conta Mumbuca em ${fd(e.date)}.</span>${pode(e)}</span><span class="mono bad">+${fn(e.amount)}</span></div>`),...ob.map(e=>`<div class="li"><span><b>Mumbuca de ${fm(e.amount)} lançado sem pagamento recebido</b><br><span class="wn">Está no caixa do Ssotica em ${fd(e.date)} e não entrou na conta Mumbuca.</span>${pode(e)}</span><span class="mono wn">−${fn(e.amount)}</span></div>`)];
+return `<section class="cd"><div class="fh"><h2>Mumbuca</h2>${!ta&&!tb?'<span class="chip n">Sem dados</span>':!ta?'<span class="chip n">Sem extrato</span>':chip(ta,tb)}</div>
+<div><div class="r hd"><span></span><span>Conta</span><span>Ssotica</span><span>Dif.</span></div><div class="r t"><span>Pagamentos recebidos</span><span>${fn(ta)}</span><span>${fn(tb)}</span><span class="${z(d)?'ok':'bad'}">${fs(d)}</span></div></div>
+${ta?(it.length?`<span class="mu">${ok} conferidos pelo valor · ${it.length} para revisar</span>${it.join('')}`:'<div class="stt ok">Todos os pagamentos conferem pelo valor</div>'):'<span class="mu">Importe o extrato da conta Mumbuca (PDF) para comparar. Só entram as linhas "Pagamento recebido"; conversões e saldo são ignorados.</span>'}
+<span class="mu">Mumbuca não passa pela Stone, então não entra na diferença Stone x Ssotica.</span></section>`}
+const pm=m=>{const [y,x]=m.split('-').map(Number),d=new Date(y,x-2,1);return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+function dinMes(m){const rows=D.filter(e=>e.type==='in'&&inL(e)&&!e.canc&&!isEst(e)&&e.source==='Ssotica'&&e.method==='Dinheiro'&&e.date.startsWith(m)),
+det=new Set(D.filter(e=>e.type==='in'&&inL(e)&&e.source==='Ssotica'&&!e.agg&&e.date.startsWith(m)).map(e=>e.date+'|'+e.loja)),
+use=rows.filter(e=>!(e.agg&&det.has(e.date+'|'+e.loja)));let ent=use.reduce((a,e)=>a+e.amount,0),viaT=false;
+if(!use.length){const tr=T.filter(t=>t.month===m&&(!LF||t.loja===LF)&&t.method==='Dinheiro');if(tr.length){ent=tr.reduce((a,t)=>a+t.amount,0);viaT=true}}
+const sai=D.filter(e=>e.type==='out'&&inL(e)&&!e.canc&&!isEst(e)&&e.method==='Dinheiro'&&e.date.startsWith(m)).reduce((a,e)=>a+e.amount,0);
+return{ent,sai,viaT,n:use.length}}
+const cK=(m,l)=>m+'|'+l;
+function setC(m,f,v){const k=cK(m,LF),o=C[k]=C[k]||{};const n=parseFloat(String(v).replace(',','.'));if(v===''||isNaN(n))delete o[f];else o[f]=n;saveC();setTimeout(render,0)}
+function useAnt(){const m=sel.slice(0,7),a=C[cK(pm(m),LF)]||{},d=dinMes(pm(m)),exp=(a.ini||0)+d.ent-d.sai,v=a.cont!==undefined?a.cont:exp;setC(m,'ini',String(v))}
+function caixaDin(){const m=sel.slice(0,7),d=dinMes(m);let ini,ro=false;
+if(LF)ini=(C[cK(m,LF)]||{}).ini;else{ro=true;const ks=Object.keys(C).filter(k=>k.startsWith(m+'|')&&C[k].ini!==undefined);ini=ks.length?ks.reduce((a,k)=>a+C[k].ini,0):undefined}
+const cont=LF?(C[cK(m,LF)]||{}).cont:undefined,exp=(ini||0)+d.ent-d.sai,df=cont===undefined?null:cont-exp;
+const inp=(f,v)=>ro?`<b class="mono">${v===undefined?'—':fm(v)}</b>`:`<input type="number" step="0.01" inputmode="decimal" style="width:150px;text-align:right" value="${v===undefined?'':v}" placeholder="0,00" onchange="setC('${m}','${f}',this.value)" aria-label="${f==='ini'?'Saldo inicial':'Contado no caixa'}">`;
+const ant=C[cK(pm(m),LF)];
+return `<section class="cd"><div class="fh"><h2>Caixa em dinheiro · ${mname(m)}</h2>${df===null?'<span class="chip n">Sem contagem</span>':z(df)?'<span class="chip ok">Bate</span>':`<span class="chip bad">${df>0?'Sobra':'Faltam'} ${fn(Math.abs(df))}</span>`}</div>
+${ro?'<span class="mu">Escolha uma loja no topo para informar o saldo inicial e a contagem. Aqui está a soma das lojas.</span>':''}
+<div class="li"><span>Saldo inicial do mês</span>${inp('ini',ini)}</div>
+<div class="li"><span>+ Dinheiro recebido no Ssotica</span><span class="mono ok">${fm(d.ent)}</span></div>
+<div class="li"><span>− Saídas em dinheiro (despesas)</span><span class="mono bad">${fm(d.sai)}</span></div>
+<div class="li"><b>= Saldo esperado no caixa</b><b class="mono">${fm(exp)}</b></div>
+<div class="li"><span>Contado no caixa (fim do mês)</span>${inp('cont',cont)}</div>
+${df===null?'':`<div class="stt ${z(df)?'ok':'bad'}">${z(df)?'Caixa em dinheiro bate':df>0?'Sobra '+fm(df)+' no caixa em relação ao esperado':'Faltam '+fm(-df)+' no caixa em relação ao esperado'}</div>`}
+${!ro&&ant&&(ant.cont!==undefined||ant.ini!==undefined)?`<button class="s" onclick="useAnt()">Usar o saldo final de ${mname(pm(m))} como saldo inicial</button>`:''}
+<span class="mu">Inclui recebimento de crediário pago em dinheiro. Saídas em dinheiro são as despesas lançadas com a forma Dinheiro.${d.viaT?' Valor tirado do Total no Período.':''}</span></section>`}
+const pend=o=>z(o.sp-o.ap)&&o.sc===0&&o.ac>0;
+function calendar(){const p=per(),[Y,M]=p.m.split('-').map(Number),nd=new Date(Y,M,0).getDate(),fw=new Date(Y,M-1,1).getDay(),dd={};
+ins().filter(e=>e.date.startsWith(p.m)&&['Pix','Débito','Crédito'].includes(e.method)).forEach(e=>{const o=dd[e.date]=dd[e.date]||{st:0,ss:0,sc:0,ac:0,sp:0,ap:0};const c=e.method!=='Pix',S=e.source==='Stone';if(S)o.st+=e.amount;else o.ss+=e.amount;if(c){if(S)o.sc+=e.amount;else o.ac+=e.amount}else{if(S)o.sp+=e.amount;else o.ap+=e.amount}});
+let h=['D','S','T','Q','Q','S','S'].map(x=>`<div class="h">${x}</div>`).join('')+Array(fw).fill('<i></i>').join('');
+for(let d=1;d<=nd;d++){const k=p.m+'-'+pad(d),o=dd[k],df=o?o.st-o.ss:0,cl=!o?'':z(df)?'ok':pend(o)?'pend':'bad';
+h+=`<button class="${cl}${fp==='dia'&&sel===k?' on':''}" aria-label="Dia ${d}" onclick="fp='dia';sel='${k}';render()"><span>${d}</span><small>${!o?'':z(df)?'✓':cl==='pend'?'⏳':(df>0?'+':'−')+Math.round(Math.abs(df))}</small></button>`}
+return `<section class="cd"><div class="fh"><h2>${mname(p.m)}</h2><span class="mu">Toque em um dia para ver</span></div><div class="cal">${h}</div>
+<span class="mu">Verde: Stone e Ssotica iguais no dia. Vermelho: diferença do dia (Stone menos Ssotica). Amarelo ⏳: o Pix bate, mas a Stone não tem cartão naquele dia (importe o relatório de vendas no cartão da Stone).</span></section>`}
+
+function diasLista(){const p=per(),[Y,M]=p.m.split('-').map(Number),nd=new Date(Y,M,0).getDate(),dd={},wd=['dom','seg','ter','qua','qui','sex','sáb'];
+ins().filter(e=>e.date.startsWith(p.m)&&['Pix','Débito','Crédito'].includes(e.method)).forEach(e=>{const o=dd[e.date]=dd[e.date]||{st:0,ss:0,sc:0,ac:0,sp:0,ap:0};const c=e.method!=='Pix',S=e.source==='Stone';if(S)o.st+=e.amount;else o.ss+=e.amount;if(c){if(S)o.sc+=e.amount;else o.ac+=e.amount}else{if(S)o.sp+=e.amount;else o.ap+=e.amount}});
+let ok=0,bd=0,pd2=0,h='';for(let d=1;d<=nd;d++){const k=p.m+'-'+pad(d),o=dd[k],has=o&&(o.st||o.ss),df=has?o.st-o.ss:0,cl=!has?'':z(df)?'ok':pend(o)?'pend':'bad';if(cl==='ok')ok++;if(cl==='bad')bd++;if(cl==='pend')pd2++;if(!has)continue;
+h+=`<button class="${cl}${fp==='dia'&&sel===k?' on':''}" onclick="fp='dia';sel='${k}';render()"><span>${pad(d)}/${pad(M)} ${wd[new Date(Y,M-1,d).getDay()]}</span><span class="v">${has?'Stone '+fm(o.st)+' · Ssotica '+fm(o.ss):'sem lançamento'}</span><b>${!has?'':z(df)?'✓ certo':cl==='pend'?'falta o cartão da Stone':(df>0?'+':'−')+fm(Math.abs(df))}</b></button>`}
+return `<section class="cd"><div class="fh"><h2>Dia a dia em ${mname(p.m)}</h2><span class="mu"><b class="ok">${ok} certos</b> · <b class="bad">${bd} com diferença</b>${pd2?` · <b class="wn">${pd2} aguardando cartão da Stone</b>`:''}</span></div><div class="dl">${h||'<span class="mu">Sem lançamentos de Pix ou cartão neste mês.</span>'}</div><span class="mu">Verde: Stone e Ssotica iguais no dia. Vermelho: diferença (Stone menos Ssotica). Cartão cai na Stone dias depois, então confira também o total do mês.</span></section>`}
+
+let pdel=null;
+function delCnt(d,src){return D.filter(e=>e.date===d&&inL(e)&&(src===''||e.source===src)).length}
+function delAsk(){const d=$('#dd').value,src=$('#ds').value;if(!d)return;const n=delCnt(d,src);if(!n){msg('Não há lançamentos nesse dia.');return}pdel={d,src,n};render()}
+function delGo(){if(!pdel)return;const {d,src}=pdel;D=D.filter(e=>!(e.date===d&&inL(e)&&(src===''||e.source===src)));pdel=null;save();render();msg('Lançamentos de '+fd(d)+' apagados.')}
+function delNo(){pdel=null;render()}
+function addAdj(){const d=$('#ad').value,m=$('#am').value,v=parseFloat(String($('#av').value).replace(',','.'));
+if(!LF){msg('Escolha a loja no topo antes de lançar o cancelamento.');return}
+if(!d||!(v>0)){msg('Informe o dia e o valor cancelado.');return}
+D.push({id:Date.now()+''+Math.random().toString(36).slice(2,6),date:d,type:'in',source:'Ssotica',loja:LF,method:m,brand:isCard(m)?($('#ab').value||''):'',amount:-v,cat:'Cancelamento',desc:('Cancelamento '+($('#ao').value||'')).trim(),adj:true});
+sel=d;save();render();msg('Cancelamento de '+fm(v)+' lançado no Ssotica em '+fd(d)+'.')}
+function ajusteDia(){const d=fp==='dia'?sel:(sel.startsWith(per().m)?sel:per().m+'-01');
+return `<section class="cd"><h2>Cancelar ou ajustar valor do Ssotica</h2><span class="mu">Use quando uma venda foi cancelada no Ssotica e o total do dia ficou maior. Entra como um desconto no dia, sem mexer nos outros lançamentos.</span>
+<div class="g"><div><label for="ad">Dia</label><input type="date" id="ad" value="${d}"></div><div><label for="am">Forma</label><select id="am">${['Pix','Boleto','Crédito','Débito','Dinheiro','Mumbuca'].map(x=>`<option>${x}</option>`).join('')}</select></div>
+<div><label for="av">Valor cancelado</label><input type="number" step="0.01" inputmode="decimal" id="av" placeholder="100,00"></div><div><label for="ab">Bandeira (cartão)</label><select id="ab"><option value="">—</option>${BR.map(x=>`<option>${x}</option>`).join('')}</select></div></div>
+<div><label for="ao">Motivo (opcional)</label><input type="text" id="ao" maxlength="60" placeholder="ex.: venda cancelada"></div>
+<button class="b" onclick="addAdj()">Lançar cancelamento</button>${LF?'':'<span class="mu">Escolha uma loja no topo para lançar.</span>'}</section>`}
+function apagaDia(){const p=per(),ds=[...new Set(D.filter(e=>inL(e)&&e.date.startsWith(p.m)).map(e=>e.date))].sort();
+if(!ds.length)return '';
+const cur=pdel?pdel.d:(ds.includes(sel)?sel:ds[0]);
+const nmS={'':'Stone e Ssotica',Stone:'só Stone',Ssotica:'só Ssotica'};
+return `<section class="cd"><h2>Apagar lançamentos de um dia</h2>
+<div class="g"><div><label for="dd">Dia</label><select id="dd">${ds.map(d=>`<option value="${d}" ${d===cur?'selected':''}>${fd(d)} (${delCnt(d,'')})</option>`).join('')}</select></div>
+<div><label for="ds">Apagar</label><select id="ds">${Object.keys(nmS).map(k=>`<option value="${k}" ${pdel&&pdel.src===k?'selected':''}>${nmS[k]}</option>`).join('')}</select></div></div>
+${pdel?`<div class="stt bad">Apagar ${pdel.n} lançamento(s) de ${fd(pdel.d)} (${nmS[pdel.src]})? Não dá para desfazer.</div><div class="g"><button class="b" onclick="delGo()">Sim, apagar</button><button class="s" onclick="delNo()">Cancelar</button></div>`:`<button class="s" onclick="delAsk()">Apagar este dia</button>`}
+<span class="mu">Apaga só o dia escolhido${LF?' na loja '+LF:' em todas as lojas'}. Use para reimportar um dia que veio errado.</span></section>`}
+
+/* ---------- conferência pagamento a pagamento ---------- */
+const grp=e=>e.method==='Pix'?'Pix':isCard(e.method)?'Cartão':'Outro';
+const dn=d=>Math.round(Date.parse(d+'T12:00:00Z')/864e5),cents=e=>Math.round(e.amount*100);
+const nt=e=>new Set(((e.cli||e.desc||'')+'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().split(/[^a-z]+/).filter(w=>w.length>2));
+const nsc=(a,b)=>{const x=nt(a),y=nt(b);let n=0;x.forEach(w=>{if(y.has(w))n++});return n};
+function match(){const ag=aggSet(),A=ins().filter(e=>e.source==='Stone'&&!ag.has(e.date+'|'+e.loja+'|'+grp(e))),B=ins().filter(e=>e.source==='Ssotica'&&!e.agg&&!e.adj&&['Pix','Débito','Crédito'].includes(e.method)),ua=new Set(A),ub=new Set(B),ok=[],df=[];
+const ex=[];for(const a of A)for(const b of B){if(b.loja!==a.loja||grp(b)!==grp(a)||cents(b)!==cents(a))continue;const dd=Math.abs(dn(b.date)-dn(a.date));if(dd>tolD)continue;ex.push([dd,(bmis(a,b)?1000:0)-nsc(a,b),a,b])}
+ex.sort((x,y)=>x[0]-y[0]||x[1]-y[1]);for(const q of ex){if(ua.has(q[2])&&ub.has(q[3])){ua.delete(q[2]);ub.delete(q[3]);ok.push([q[2],q[3]])}}
+const c=[];for(const a of A){if(!ua.has(a))continue;for(const b of B){if(!ub.has(b)||b.loja!==a.loja||grp(b)!==grp(a))continue;const dd=Math.abs(dn(b.date)-dn(a.date));if(dd>tolD)continue;c.push([Math.abs(a.amount-b.amount),dd,a,b])}}
+c.sort((x,y)=>x[0]-y[0]||x[1]-y[1]);for(const q of c){const a=q[2],b=q[3];if(ua.has(a)&&ub.has(b)){ua.delete(a);ub.delete(b);df.push([a,b])}}
+return{ok,df,oa:A.filter(a=>ua.has(a)),ob:B.filter(b=>ub.has(b))}}
+function pixDet(pf){const r=match(),isP=e=>e.method==='Pix',st=new Map();
+r.ok.forEach(q=>st.set(q[1],{k:'ok',a:q[0]}));r.df.forEach(q=>st.set(q[1],{k:'df',a:q[0]}));
+const ag=aggSet(),all=ins().filter(e=>isP(e)&&pf(e)),B=all.filter(e=>e.source==='Ssotica'&&!e.agg&&!e.adj),AD=all.filter(e=>e.adj),A=all.filter(e=>e.source==='Stone'),aggD=new Set(all.filter(e=>e.source==='Ssotica'&&e.agg).map(e=>e.date));
+const oaS=new Set(r.oa),days=[...new Set([...B,...A,...AD].map(e=>e.date).concat([...aggD]))].sort();
+if(!days.length)return '';
+const sum=l=>l.reduce((t,e)=>t+e.amount,0);let nbad=0;
+const blocks=days.map(d=>{const b=B.filter(e=>e.date===d).sort((x,y)=>(x.hora||'').localeCompare(y.hora||'')),a=A.filter(e=>e.date===d),sb=sum(b),sa=sum(a),hasAgg=aggD.has(d)&&!b.length,sAgg=sum(all.filter(e=>e.source==='Ssotica'&&e.agg&&e.date===d)),adj=AD.filter(e=>e.date===d),ss=(hasAgg?sAgg:sb)+sum(adj),df=sa-ss,bad=!z(df);if(bad)nbad++;
+const rows=b.map(e=>{const x=st.get(e),chip=!x?'<span class="chip bad">Sem entrada na Stone</span>':x.k==='ok'?'<span class="chip ok">Confere</span>':`<span class="chip wn">Stone recebeu ${fn(x.a.amount)}</span>`;
+return `<details class="dt"><summary class="li"><span>${e.hora?esc(e.hora)+' · ':''}${esc(e.cli||e.desc||'Pix')}${e.os?' · nº '+esc(e.os):''}<br>${chip}</span><span class="mono"><b>${fn(e.amount)}</b> ›</span></summary>${detBody(e)}</details>`}).join('')+
+adj.map(e=>`<details class="dt"><summary class="li fz"><span>Ajuste · ${esc(e.desc||'Cancelamento')}<br><span class="chip wn">Desconta do Ssotica</span></span><span class="mono"><b>${fn(e.amount)}</b> ›</span></summary>${detBody(e)}</details>`).join('')+a.filter(e=>oaS.has(e)).map(e=>`<details class="dt"><summary class="li"><span>Stone${e.desc?' · '+esc(e.desc):''}<br><span class="chip bad">Entrou na Stone e não está no Ssotica</span></span><span class="mono"><b>${fn(e.amount)}</b> ›</span></summary>${detBody(e)}</details>`).join('');
+return `<details ${bad?'open':''}><summary><b>${fd(d)}</b> · Ssotica ${fm(ss)} · Stone ${fm(sa)} · <b class="${bad?'bad':'ok'}">${bad?(df>0?'+':'−')+fm(Math.abs(df)):'certo'}</b></summary>${hasAgg?'<span class="mu">Este dia só tem o resumo do dia do Ssotica, sem cada Pix. Importe a Movimentação do caixa para ver o detalhe.</span>'+all.filter(e=>e.source==='Ssotica'&&e.agg&&e.date===d).map(e=>`<details class="dt"><summary class="li fz"><span>Resumo do dia · Pix</span><span class="mono"><b>${fn(e.amount)}</b> ›</span></summary>${detBody(e)}</details>`).join(''):''}${rows}</details>`}).join('');
+return `<section class="cd"><div class="fh"><h2>Pix do Ssotica, detalhado</h2><span class="mu">${nbad?'<b class="bad">'+nbad+' dia(s) com diferença</b>':'<b class="ok">todos certos</b>'}</span></div><span class="mu">Cada Pix lançado no caixa do Ssotica, dia a dia, comparado com a Stone pelo valor. Os dias com diferença já vêm abertos.</span>${blocks}</section>`}
+const kvr=(k,v)=>v?`<span>${k}</span><span>${esc(String(v))}</span>`:'';
+function detBody(e){
+if(e.agg){const sub=D.filter(x=>x.source==='Ssotica'&&!x.agg&&!x.adj&&!x.canc&&x.type==='in'&&x.date===e.date&&(x.loja||'')===(e.loja||'')&&x.method===e.method&&(!e.brand||x.brand===e.brand)&&!cred(x));
+return `<div class="db"><div class="g"><div><label for="av${e.id}">Corrigir valor do resumo</label><input type="number" step="0.01" inputmode="decimal" id="av${e.id}" value="${e.amount}" onchange="setAmt('${e.id}',this.value)"></div></div><span class="mu">Resumo do dia do Ssotica: ${fm(e.amount)} em ${esc(lbl(e))}. É um total, não cada ${esc(e.method)}.</span>${sub.length?`<span class="mu">${sub.length} lançamento(s) detalhado(s) deste dia (${fm(sub.reduce((t,x)=>t+x.amount,0))}). Quando há detalhe, o resumo do dia não é somado.</span>`+sub.map(x=>`<div class="sub"><span>${x.hora?esc(x.hora)+' · ':''}${esc(x.cli||x.desc||'')}${x.os?' · nº '+esc(x.os):''}</span><span class="mono"><b>${fn(x.amount)}</b> <button class="x" aria-label="Apagar" onclick="del('${x.id}')">✕</button></span></div>`).join(''):'<span class="mu">Este dia só tem o total. Para ver e apagar cada Pix, importe a Movimentação do caixa desse dia (aba Importar).</span>'}<button class="dl2" onclick="del('${e.id}')">Apagar este resumo do dia</button></div>`}
+return `<div class="db"><div class="kv">${kvr('Data',fd(e.date)+(e.hora?' '+e.hora:''))}${kvr('Loja',ljName(e.loja))}${kvr('Origem',e.source)}${kvr('Forma',lbl(e))}${kvr('Valor',fm(e.amount))}${kvr('Cliente',e.cli)}${kvr('Venda / OS',e.os)}${kvr('Categoria',e.cat)}${kvr('Parcela',e.parc)}${kvr('Destino',e.dest)}${kvr('Usuário',e.usr)}${kvr('Descrição',!e.cli&&!e.cat?e.desc:'')}</div><div class="g"><div><label for="sm${e.id}">Alterar forma de pagamento</label><select id="sm${e.id}" onchange="setM('${e.id}',this.value)">${['Pix','Crédito','Débito','Dinheiro','Mumbuca','Outro'].map(m=>`<option ${m===e.method?'selected':''}>${m}</option>`).join('')}</select></div></div><div class="g"><div><label for="av${e.id}">Corrigir valor</label><input type="number" step="0.01" inputmode="decimal" id="av${e.id}" value="${e.amount}" onchange="setAmt('${e.id}',this.value)"></div></div><button class="s" onclick="togC('${e.id}')">${e.canc?'Desfazer cancelamento':'Marcar como cancelado'}</button><span class="mu">Cancelado fica no histórico, mas não entra em nenhuma soma nem na conferência.</span><button class="dl2" onclick="del('${e.id}')">Apagar este lançamento</button></div>`}
+function setAmt(id,v){const e=D.find(x=>x.id===id),n=parseFloat(String(v).replace(',','.'));if(!e||isNaN(n)){msg('Valor inválido.');return}e.amount=n;save();setTimeout(render,0);msg('Valor corrigido para '+fm(n)+'.')}
+function lancSs(id){const e=D.find(x=>x.id===id);if(!e)return;D.push({id:Date.now()+''+Math.random().toString(36).slice(2,6),date:e.date,type:'out',source:'Ssotica',loja:e.loja||'',method:e.method,brand:'',amount:e.amount,desc:e.desc||'',manual:true});save();render();msg('Lançado no PAGO NA SSOTICA em '+fd(e.date)+': '+fm(e.amount)+'.')}
+function ignC(id){const e=D.find(x=>x.id===id);if(!e)return;e.canc=true;save();render();msg('Item ignorado. Ele não entra mais nas somas. Para desfazer, abra o lançamento em Contas pagas e use Desfazer cancelamento.')}
+function igualaSs(id,v){const e=D.find(x=>x.id===id);if(!e)return;e.amount=v;save();render();msg('Valor do Ssotica corrigido para '+fm(v)+'.')}
+function togC(id){const e=D.find(x=>x.id===id);if(!e)return;if(e.canc)delete e.canc;else e.canc=true;save();render();msg(e.canc?'Lançamento cancelado.':'Cancelamento desfeito.')}
+function setM(id,m){const e=D.find(x=>x.id===id);if(!e)return;e.method=m;if(!isCard(m))e.brand='';save();render();msg('Forma alterada para '+m+'.')}
+const pode=e=>{const n=e&&(e.cli||e.desc);return n?`<br><span class="mu">Pode ser: ${esc(n)}</span>`:''};
+const lbl=e=>e.method+(e.brand?' '+short(e.brand):'');
+const bmis=(a,b)=>isCard(a.method)&&((a.brand&&b.brand&&a.brand!==b.brand)||a.method!==b.method);
+let RS={};try{RS=JSON.parse(localStorage.getItem('pag5')||'{}')}catch(e){}
+const saveRS=()=>{try{localStorage.setItem('pag5',JSON.stringify(RS))}catch(e){}};
+const rkey=(k,e)=>k+'|'+e.date+'|'+cents(e)+'|'+(e.loja||'');
+function revData(pf){const r=match(),inP=q=>pf(q[0])||pf(q[1]),df=r.df.filter(inP).map(q=>({k:rkey('df',q[0]),q,e:q[0]})),oa=r.oa.filter(pf).map(e=>({k:rkey('oa',e),e})),ob=r.ob.filter(pf).map(e=>({k:rkey('ob',e),e})),un=l=>l.filter(x=>!RS[x.k]),br=r.ok.filter(q=>inP(q)&&bmis(q[0],q[1])).map(q=>({k:rkey('br',q[0]),q,e:q[0]}));
+return{br:un(br),ok:r.ok.filter(inP),df:un(df),oa:un(oa),ob:un(ob),res:[...oa,...ob,...df,...br].filter(x=>RS[x.k]),n:un(df).length+un(oa).length+un(ob).length+un(br).length}}
+function igualaBr(id,m,b){const e=D.find(x=>x.id===id);if(!e)return;e.method=m;e.brand=b;save();render();msg('Bandeira ajustada aqui para '+m+(b?' '+short(b):'')+'. Lembre de corrigir também no Ssotica.')}
+function resolv(k){RS[decodeURIComponent(k)]=Date.now();saveRS();render();msg('Marcado como resolvido. Ele sai da lista, e dá para desfazer em "resolvidos".')}
+function unres(k){delete RS[decodeURIComponent(k)];saveRS();render()}
+function revisar(pf){const d=revData(pf),n=d.n,rb=k=>`<div class="acs"><button class="s" onclick="resolv('${encodeURIComponent(k)}')">Marcar como resolvido</button></div>`;
+const items=[
+...d.oa.map(x=>{const e=x.e;return `<div class="li"><span><b>${esc(lbl(e))} de ${fm(e.amount)} não lançado no Ssotica</b><br><span class="bad">Entrou na Stone em ${fd(e.date)} e não está no caixa.</span>${pode(e)}</span><span class="mono bad">+${fn(e.amount)}</span>${rb(x.k)}</div>`}),
+...d.ob.map(x=>{const e=x.e;return `<div class="li"><span><b>${esc(lbl(e))} de ${fm(e.amount)} lançado sem entrada na Stone</b><br><span class="wn">Está no caixa do Ssotica em ${fd(e.date)} e não entrou na conta.</span>${pode(e)}</span><span class="mono wn">−${fn(e.amount)}</span>${rb(x.k)}</div>`}),
+...d.br.map(x=>{const a=x.q[0],b=x.q[1];return `<div class="li"><span><b>Bandeira diferente em ${fm(a.amount)}</b><br><span class="wn">${fd(a.date)}: Stone ${esc(lbl(a))} · Ssotica ${esc(lbl(b))}. O valor bate, mas a bandeira (ou débito/crédito) é outra. Corrija no Ssotica.</span>${pode(b)}</span><span class="mono wn">bandeira</span><div class="acs"><button class="s" onclick="igualaBr('${b.id}','${a.method}','${a.brand}')">Igualar aqui à da Stone</button><button class="s" onclick="resolv('${encodeURIComponent(x.k)}')">Marcar como resolvido</button></div></div>`}),
+...d.df.map(x=>{const a=x.q[0],b=x.q[1],v=a.amount-b.amount;return `<div class="li"><span><b>${esc(lbl(b))} com valor diferente</b><br><span class="${v>0?'bad':'wn'}">Stone ${fm(a.amount)} · Ssotica ${fm(b.amount)}: ${v>0?'faltou lançar':'lançado a mais'} ${fm(Math.abs(v))}.</span>${pode(a.desc?a:b)}</span><span class="mono ${v>0?'bad':'wn'}">${fs(v)}</span>${rb(x.k)}</div>`})];
+const rl=d.res.map(x=>{const e=x.e;return `<div class="li"><span>${fd(e.date)} · ${fm(e.amount)} <span class="mu">${esc(lbl(e))}</span></span><button class="s" onclick="unres('${encodeURIComponent(x.k)}')">Desfazer</button></div>`}).join('');
+return `<section class="cd" id="nb"><div class="fh"><h2>O que não bate</h2><select id="tl" aria-label="Diferença de data aceita" style="width:auto" onchange="tolD=+this.value;render()">${[[0,'Mesmo dia'],[1,'Até 1 dia'],[2,'Até 2 dias'],[3,'Até 3 dias'],[5,'Até 5 dias']].map(o=>`<option value="${o[0]}" ${o[0]===tolD?'selected':''}>${o[1]}</option>`).join('')}</select></div>
+${aggSet().size?'<span class="mu">Dias só com o resumo do Ssotica são conferidos em "Divergência por dia".</span>':''}${n?`<span class="mu">${n} para revisar · ${d.ok.length} conferidos pelo valor</span>${items.slice(0,40).join('')}${items.length>40?`<span class="mu">Mostrando 40 de ${items.length}.</span>`:''}`:`<div class="stt ok">Tudo bate pelo valor${d.ok.length?' ('+d.ok.length+' pagamentos conferidos)':''}</div>`}${rl?`<details><summary>${d.res.length} resolvido(s)</summary>${rl}</details>`:''}</section>`}
+
+/* ---------- total no período x dias ---------- */
+const gg=e=>e.method==='Pix'?'Pix':e.method==='Crédito'?'Crédito':e.method==='Débito'?'Débito':'Outros';
+const susp=()=>D.filter(e=>e.source==='Ssotica'&&e.type==='in'&&!e.hora&&!e.cat&&/^(Cr[eé]dito|D[eé]bito|Pix|Dinheiro|Cart[aã]o|Recebido|Total)\b/i.test(e.desc||''));
+function rmSusp(){const ids=new Set(susp().map(e=>e.id)),n=ids.size;D=D.filter(e=>!ids.has(e.id));save();render();msg(n+' lançamentos removidos. Importe o Total no Período de novo, ele fica separado dos dias.')}
+function suspCard(){const l=susp();if(!l.length)return '';const sm=l.reduce((t,e)=>t+e.amount,0);
+return `<section class="cd"><div class="stt bad">${l.length} lançamentos do Ssotica parecem vir do quadro "Total no Período" (${fm(sm)}). Eles estão sendo somados aos dias e duplicam o total.</div><button class="b" onclick="rmSusp()">Remover esses ${l.length} lançamentos</button><span class="mu">O quadro "Total no Período" deve ser importado na aba Importar, onde fica guardado separado e não é somado.</span></section>`}
+function delTot(){const m=sel.slice(0,7);T=T.filter(t=>!(t.month===m&&(!LF||t.loja===LF)));saveT();render();msg('Total do período removido.')}
+function setTAmt(id,v){const t=T.find(x=>x.id===id),n=parseFloat(String(v).replace(',','.'));if(!t||isNaN(n)){msg('Valor inválido.');return}t.amount=n;saveT();setTimeout(render,0);msg('Valor corrigido.')}
+function delT(id){T=T.filter(x=>x.id!==id);saveT();render()}
+function addT(){const m=sel.slice(0,7),f=$('#tf').value,b=isCard(f)?$('#tb').value:'',v=parseFloat(String($('#tv').value).replace(',','.'));
+if(!LF){msg('Escolha a loja no topo.');return}if(!(v>0)){msg('Informe o valor.');return}
+T.push({id:Date.now()+''+Math.random().toString(36).slice(2,8),month:m,loja:LF,source:'Ssotica',label:(f+(b?' '+b:'')).trim(),method:f,brand:b,amount:v});saveT();render();msg('Adicionado ao total do período.')}
+function totSec(){const m=sel.slice(0,7),rows=T.filter(t=>t.month===m&&(!LF||t.loja===LF)),G=['Pix','Crédito','Débito','Outros'];
+if(!rows.length)return `<section class="cd"><h2>Total no período</h2><span class="mu">Importe o quadro "Total no Período" do Ssotica (foto, PDF ou Excel) na aba Cartões para conferir o total recebido de ${mname(m)} por forma de pagamento. Esse total fica separado e não é somado aos lançamentos dos dias.</span></section>`;
+const R={},DS={},ST={};G.forEach(g=>{R[g]=0;DS[g]=0;ST[g]=0});
+rows.forEach(t=>R[gg(t)]+=t.amount);
+ins().filter(e=>e.date.startsWith(m)).forEach(e=>{(e.source==='Stone'?ST:DS)[gg(e)]+=e.amount});
+const row=(n,r,s,st,t)=>`<div class="r${t?' t':''}"><span>${n}</span><span>${fn(r)}</span><span>${st?fn(s):'—'}</span><span class="${st?(z(s-r)?'ok':'bad'):''}">${st?fs(s-r):''}</span></div>`;
+const HV={},V={};G.forEach(g=>{HV[g]=rows.some(t=>gg(t)===g);V[g]=HV[g]?R[g]:DS[g]});
+const bk=['Pix','Crédito','Débito'],Rt=bk.reduce((t,g)=>t+V[g],0),St=bk.reduce((t,g)=>t+ST[g],0);
+const dd=G.filter(g=>HV[g]&&!z(R[g]-DS[g])),now=new Date(),last=m===iso(now).slice(0,7)?now.getDate():new Date(+m.slice(0,4),+m.slice(5),0).getDate(),have=new Set(D.filter(e=>e.source==='Ssotica'&&inL(e)&&e.date.startsWith(m)).map(e=>e.date)),miss=[];
+for(let i=1;i<=last;i++){const k=m+'-'+pad(i);if(!have.has(k))miss.push(pad(i)+'/'+m.slice(5))}
+return `<section class="cd"><div class="fh"><h2>Total no período · ${mname(m)}</h2>${chip(St,Rt)}</div>
+<span class="mu">Total do relatório do Ssotica x o que entrou na Stone. Esse total não entra nas somas dos dias.</span>
+<div><div class="r hd"><span></span><span>Ssotica</span><span>Stone</span><span>Dif.</span></div>${row('Pix'+(HV.Pix?'':' <small class="mu">(soma dos dias)</small>'),V.Pix,ST.Pix,1)}${row('Crédito'+(HV['Crédito']?'':' <small class="mu">(soma dos dias)</small>'),V['Crédito'],ST['Crédito'],1)}${row('Débito'+(HV['Débito']?'':' <small class="mu">(soma dos dias)</small>'),V['Débito'],ST['Débito'],1)}${row('Total',Rt,St,1,1)}${V.Outros?row('Dinheiro e outros'+(HV.Outros?'':' <small class="mu">(soma dos dias)</small>'),V.Outros,0,0):''}</div>
+${dd.length?`<div class="stt wn">Os dias importados do caixa não somam o mesmo que o relatório do período.</div>${dd.map(g=>`<div class="li"><span><b>${g}</b><br><span class="mu">Relatório ${fm(R[g])} · soma dos dias ${fm(DS[g])}</span></span><span class="mono ${R[g]>DS[g]?'bad':'wn'}">${R[g]>DS[g]?'faltam '+fn(R[g]-DS[g]):'+'+fn(DS[g]-R[g])+' a mais'}</span></div>`).join('')}${miss.length?`<span class="mu">Dias do mês sem caixa do Ssotica importado: ${miss.length>14?miss.slice(0,14).join(', ')+' e mais '+(miss.length-14):miss.join(', ')}.</span>`:''}`:'<div class="stt ok">Os dias importados do Ssotica somam o mesmo que o relatório do período</div>'}
+${rows.some(t=>gg(t)==='Crédito')&&rows.some(t=>gg(t)==='Débito')?'':'<div class="stt wn">O relatório do período só trouxe '+[...new Set(rows.map(t=>gg(t)))].join(', ')+'. Para o que faltou usei a soma dos dias do caixa. Para usar o valor do relatório, adicione abaixo ou importe o quadro de novo.</div>'}
+<details ${rows.some(t=>gg(t)==='Crédito')&&rows.some(t=>gg(t)==='Débito')?'':'open'}><summary>Formas de pagamento do relatório (editar)</summary>${rows.map(t=>`<div class="li"><span>${esc(t.label)}<br><span class="mu">${esc(ljName(t.loja))}</span></span><span class="mono"><input type="number" step="0.01" inputmode="decimal" style="width:120px;text-align:right" value="${t.amount}" onchange="setTAmt('${t.id}',this.value)" aria-label="Valor de ${esc(t.label)}"> <button class="x" aria-label="Apagar" onclick="delT('${t.id}')">✕</button></span></div>`).join('')}
+<div class="g"><div><label for="tf">Forma</label><select id="tf"><option>Pix</option><option>Crédito</option><option>Débito</option><option>Dinheiro</option></select></div><div><label for="tb">Bandeira (cartão)</label><select id="tb"><option value="">—</option>${BR.map(b=>`<option>${b}</option>`).join('')}</select></div><div><label for="tv">Valor</label><input type="number" step="0.01" inputmode="decimal" id="tv" placeholder="0,00"></div></div><button class="s" onclick="addT()">Adicionar ao total do período</button>${LF?'':'<span class="mu">Escolha uma loja no topo para adicionar.</span>'}</details>
+<button class="s" onclick="delTot()">Remover total importado</button></section>`}
+function diasDiv(p){const m=p.m,ds={};
+ins().filter(e=>e.date.startsWith(m)&&['Pix','Débito','Crédito'].includes(e.method)).forEach(e=>{const o=ds[e.date]=ds[e.date]||{st:0,ss:0,g:{Pix:0,'Crédito':0,'Débito':0}},v=e.source==='Stone'?e.amount:-e.amount;o.g[e.method]+=v;if(e.source==='Stone')o.st+=e.amount;else o.ss+=e.amount});
+const all=Object.keys(ds).sort();if(!all.length)return '';const bad=all.filter(d=>!z(ds[d].st-ds[d].ss));
+return `<section class="cd"><h2>Divergência por dia</h2>${bad.length?`<span class="mu">${bad.length} ${bad.length>1?'dias com valor diferente':'dia com valor diferente'} entre Stone e Ssotica. Cartão costuma cair na Stone dias depois da venda.</span>${bad.map(d=>{const o=ds[d],x=o.st-o.ss,gs=Object.entries(o.g).filter(e=>!z(e[1])).map(e=>e[0]+' '+fs(e[1])).join(' · ');return `<div class="li"><span><b>${fd(d)}</b><br><span class="mu">Stone ${fm(o.st)} · Ssotica ${fm(o.ss)}${gs?'<br>'+gs:''}</span><br><span class="${x>0?'bad':'wn'}">${x>0?'Entrou a mais na Stone: falta lançar '+fm(x)+' no Ssotica':'Lançado a mais no Ssotica: faltam '+fm(-x)+' na Stone'}</span></span><button class="s" onclick="fp='dia';sel='${d}';render()">Ver dia</button></div>`}).join('')}`:'<div class="stt ok">Nenhum dia com divergência</div>'}</section>`}
+
+/* ---------- painel ---------- */
+const PS=['Pix','Débito','Crédito'];
+const mtot=(m,src)=>ins().filter(e=>e.source===src&&e.date.startsWith(m)&&PS.includes(e.method)).reduce((a,e)=>a+e.amount,0);
+function dayStats(m){const dd={};ins().filter(e=>e.date.startsWith(m)&&PS.includes(e.method)).forEach(e=>{const o=dd[e.date]=dd[e.date]||{st:0,ss:0,sc:0,ac:0,sp:0,ap:0},c=e.method!=='Pix',S=e.source==='Stone';if(S)o.st+=e.amount;else o.ss+=e.amount;if(c){if(S)o.sc+=e.amount;else o.ac+=e.amount}else{if(S)o.sp+=e.amount;else o.ap+=e.amount}});let ok=0,bad=0,pe=0;Object.values(dd).forEach(o=>{if(z(o.st-o.ss))ok++;else if(pend(o))pe++;else bad++});return{ok,bad,pe}}
+function acumCard(c,d){const p=per(),m=p.m,pmo=pm(m),sT=fp==='mes'?c.st:mtot(m,'Stone'),sS=fp==='mes'?c.ss:mtot(m,'Ssotica'),pS=mtot(pmo,'Stone'),mx=Math.max(sT,sS,1),pct=sT?Math.round(sS/sT*100):0,ch=pS?Math.round((sT-pS)/pS*100):null,dm=sT-sS;
+return `<section class="cd"><div class="fh"><h2>Entradas acumuladas</h2><span class="chip date">${mname(m)}</span></div><div class="acg"><div class="bars">
+<div class="bl"><span>Stone</span><b class="mono">${fm(sT)}</b></div><div class="pbar2"><i style="width:${sT/mx*100}%;background:var(--st)"></i></div>
+<div class="bl"><span>Ssotica</span><b class="mono">${fm(sS)}</b></div><div class="pbar2"><i style="width:${sS/mx*100}%;background:var(--ss)"></i></div>
+<div class="bl"><span>Diferença</span><b class="mono ${z(dm)?'ok':'bad'}">${z(dm)?'R$ 0,00':(dm>0?'+':'−')+fm(Math.abs(dm))}</b></div>
+<span class="mu">${sT?`O Ssotica lançou ${pct}% do que entrou na Stone.`:'Sem entradas da Stone neste mês.'}${ch!==null?` A Stone está ${ch>=0?'+':''}${ch}% em relação a ${mname(pmo)}.`:''}</span>${c.useT?'<span class="mu">Ssotica: usando o Total no Período importado.</span>':''}${c.oth?`<span class="mu">Sem forma reconhecida: ${fm(c.oth)}</span>`:''}${DL&&c.n?`<button class="s" onclick="expFech()">Baixar fechamento (.xlsx)</button>`:''}</div>
+<div><div class="lgd"><span><i style="background:var(--st)"></i>Stone</span><span><i style="background:var(--ss)"></i>Ssotica</span><span>soma dia a dia, Pix e cartão</span></div><div class="chw" id="chw" data-m="${m}"></div></div></div></section>`}
+function drawAcum(){const el=$('#chw');if(!el)return;const m=el.dataset.m,[Y,M]=m.split('-').map(Number),nd=new Date(Y,M,0).getDate(),st=Array(nd+1).fill(0),ss=Array(nd+1).fill(0);
+ins().filter(e=>e.date.startsWith(m)&&PS.includes(e.method)).forEach(e=>{(e.source==='Stone'?st:ss)[+e.date.slice(8)]+=e.amount});
+let a=0,b=0,ld=0;const S=[0],O=[0];for(let d=1;d<=nd;d++){a+=st[d];b+=ss[d];S[d]=a;O[d]=b;if(st[d]||ss[d])ld=d}
+if(!ld){el.innerHTML='<span class="mu">Sem lançamentos de Pix ou cartão neste mês.</span>';return}
+const xm=Math.max(ld,2),W=Math.max(300,el.clientWidth),H=230,ml=54,mr=62,mt=12,mb=26,iw=W-ml-mr,ih=H-mt-mb,mx=Math.max(S[ld],O[ld],1),raw=mx/4,pw=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/pw,stp=(f<=1?1:f<=2?2:f<=5?5:10)*pw,top=Math.ceil(mx/stp)*stp,X=d=>ml+(d-1)/(xm-1)*iw,Y2=v=>mt+ih-v/top*ih,hasSs=O[ld]!==0;
+const fk=v=>v>=1e6?(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi':v>=1000?(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':String(Math.round(v));
+let g='';for(let v=0;v<=top+1e-6;v+=stp)g+=`<line class="gr" x1="${ml}" x2="${W-mr}" y1="${Y2(v)}" y2="${Y2(v)}"/><text x="${ml-6}" y="${Y2(v)+4}" text-anchor="end">${fk(v)}</text>`;
+const stepX=xm>20?5:xm>10?2:1;for(let d=1;d<=xm;d+=stepX)g+=`<text x="${X(d)}" y="${H-8}" text-anchor="middle">${d}</text>`;
+const path=(arr)=>{let q='';for(let d=1;d<=ld;d++)q+=(d>1?'L':'M')+X(d).toFixed(1)+' '+Y2(arr[d]).toFixed(1);return q},area=(arr)=>path(arr)+`L${X(ld)} ${Y2(0)}L${X(1)} ${Y2(0)}Z`;
+let y1=Y2(S[ld]),y2=Y2(O[ld]);if(hasSs&&Math.abs(y1-y2)<13){if(y1<=y2){y1-=7;y2+=7}else{y1+=7;y2-=7}}
+el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Entradas acumuladas de Stone e Ssotica no mês">${g}<path class="a1" d="${area(S)}"/><path class="l1" d="${path(S)}"/>${hasSs?`<path class="a2" d="${area(O)}"/><path class="l2" d="${path(O)}"/>`:''}
+<circle class="d1" cx="${X(ld)}" cy="${Y2(S[ld])}" r="4"/><text x="${X(ld)+9}" y="${y1+4}">Stone</text>${hasSs?`<circle class="d2" cx="${X(ld)}" cy="${Y2(O[ld])}" r="4"/><text x="${X(ld)+9}" y="${y2+4}">Ssotica</text>`:''}
+<line class="cl" id="cl" y1="${mt}" y2="${mt+ih}" style="display:none"/><rect id="hv" x="${ml}" y="${mt}" width="${iw}" height="${ih}" fill="transparent"/></svg><div id="ct" hidden></div>
+<details><summary>Ver em tabela</summary><div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:12px;width:100%"><tr><th align="left">Dia</th><th align="right">Stone</th><th align="right">Ssotica</th><th align="right">Dif.</th></tr>${Array.from({length:ld},(_,i)=>i+1).map(d=>`<tr><td>${pad(d)}/${pad(M)}</td><td align="right" class="mono">${fn(S[d])}</td><td align="right" class="mono">${fn(O[d])}</td><td align="right" class="mono">${fs(S[d]-O[d])}</td></tr>`).join('')}</table></div></details>`;
+const hv=el.querySelector('#hv'),cl=el.querySelector('#cl'),ct=el.querySelector('#ct'),sv=el.querySelector('svg');
+const mv=ev=>{const r=sv.getBoundingClientRect(),px=(ev.clientX-r.left)/r.width*W,d=Math.max(1,Math.min(ld,Math.round((px-ml)/iw*(xm-1))+1));cl.setAttribute('x1',X(d));cl.setAttribute('x2',X(d));cl.style.display='';
+ct.innerHTML=`<b>${pad(d)}/${pad(M)}</b><br>Stone ${fm(S[d])}<br>Ssotica ${fm(O[d])}<br>Dif. ${z(S[d]-O[d])?'R$ 0,00':fs(S[d]-O[d])}`;ct.hidden=false;const bx=r.width/W*X(d),w=ct.offsetWidth;ct.style.left=Math.max(0,Math.min(el.clientWidth-w,bx+12))+'px';ct.style.top='8px'};
+hv.addEventListener('pointermove',mv);hv.addEventListener('pointerdown',mv);hv.addEventListener('pointerleave',()=>{cl.style.display='none';ct.hidden=true})}
+window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(drawAcum,120)});
+function kpiBox(tit,a,b,go,la,lb,sub){const p=per(),cls=!a&&!b?'':z(a-b)?'ok':'bad',d=a-b;
+return `<div class="kpi ${cls}"><div class="kt">${tit}</div><span class="chip date">${p.label}</span><div class="ks">${la}</div><div class="kv2">${fm(a)}</div><div class="ks">${lb} ${fm(b)} · <b class="${z(d)?(a||b?'ok':''):'bad'}">${z(d)?(a||b?'bate':'sem dados'):(d>0?'sobra ':'faltam ')+fm(Math.abs(d))}</b></div>${sub||''}<div class="kb"><button class="s" onclick="tab='${go}';render()">Abrir</button></div></div>`}
+function kpis(c,rv,ds){const p=per(),m=p.m,cr=c.S['Crédito'],db=c.S['Débito'],mA=c.L.filter(e=>e.source==='Mumbuca'&&e.method==='Mumbuca').reduce((t,e)=>t+e.amount,0),mB=c.L.filter(e=>e.source==='Ssotica'&&e.method==='Mumbuca').reduce((t,e)=>t+e.amount,0),
+O=outsL().filter(p.pf),oS=O.filter(e=>e.source==='Stone').reduce((t,e)=>t+e.amount,0),oA=O.filter(e=>e.source!=='Stone').reduce((t,e)=>t+e.amount,0),di=dinMes(m),
+have=[D.some(e=>e.date.startsWith(m)&&e.source==='Stone'&&!e.vend&&!e.manual),D.some(e=>e.date.startsWith(m)&&e.vend),D.some(e=>e.date.startsWith(m)&&e.source==='Ssotica'&&e.type==='in'&&!e.agg&&!e.manual),D.some(e=>e.date.startsWith(m)&&e.type==='out'&&!e.manual),T.some(t=>t.month===m)].filter(Boolean).length;
+const mini=(t,v,s,cls,go)=>`<div class="kpi ${cls}"><div class="kt">${t}</div><div class="kv2">${v}</div><div class="ks">${s}</div>${go?`<div class="kb"><button class="s" onclick="${go[1]}">${go[0]}</button></div>`:''}</div>`;
+return `<div class="kg">${kpiBox('Pix',c.S.Pix.Stone.t,c.S.Pix.Ssotica.t,'pix','Stone','Ssotica')}${kpiBox('Cartões',cr.Stone.t+db.Stone.t,cr.Ssotica.t+db.Ssotica.t,'car','Stone','Ssotica')}${kpiBox('Mumbuca',mA,mB,'mum','Conta Mumbuca','Ssotica')}${kpiBox('Contas pagas',oS,oA,'out','Pago na Stone','PAGO NA SSOTICA')}</div>
+<div class="kg">${mini('Dias com diferença',ds.bad,`${ds.ok} certos${ds.pe?' · '+ds.pe+' aguardando cartão da Stone':''}`,ds.bad?'bad':(ds.ok?'ok':''),null)}${mini('Itens para revisar',rv.n,rv.n?'Pagamentos sem par entre Stone e Ssotica':'Tudo conferido pelo valor',rv.n?'bad':(rv.ok.length?'ok':''),rv.n?['Ver itens',"document.getElementById('nb').scrollIntoView({behavior:'smooth'})"]:null)}${mini('Caixa em dinheiro',fm(di.ent-di.sai),`Recebido ${fm(di.ent)} · saídas ${fm(di.sai)}`,'',['Abrir',"document.getElementById('cxd').open=true;document.getElementById('cxd').scrollIntoView({behavior:'smooth'})"])}${mini('Arquivos do mês',have+' de 5',have<5?'Faltam arquivos para a conferência completa':'Todos carregados',have<5?'bad':'ok',['Ver arquivos',"tab='dados';render()"])}</div>`}
+function lojaCard(p){if(LF)return '';const keep=LF,R=[];LJ.forEach(l=>{LF=l;const c=calc(p.pf);if(c.n)R.push({l,st:c.st,ss:c.ss})});LF=keep;if(R.length<2)return '';
+return `<section class="cd"><h2>Por loja · ${p.label}</h2><div class="r hd"><span></span><span>Stone</span><span>Ssotica</span><span>Dif.</span></div>${R.map(x=>{const d=x.st-x.ss;return `<div class="r rl" onclick="LF='${x.l}';render()" title="Ver só esta loja"><span>${esc(x.l)}</span><span>${fn(x.st)}</span><span>${fn(x.ss)}</span><span class="${z(d)?'ok':'bad'}">${z(d)?'✓':fs(d)}</span></div>`}).join('')}<span class="mu">Toque em uma loja para ver só ela.</span></section>`}
+function painel(){const p=per(),m=p.m,c=calc(p.pf),d=c.st-c.ss,rv=revData(p.pf),ds=dayStats(m);
+const bkOld=(()=>{try{const t=+localStorage.getItem('pag4')||0;return D.length>20&&Date.now()-t>7*864e5}catch(e){return false}})();
+const al=!c.n?'':(rv.n||ds.bad)?`<div class="alert"><span>${rv.n?rv.n+' item(ns) não batem':''}${rv.n&&ds.bad?' · ':''}${ds.bad?ds.bad+' dia(s) com diferença':''} em ${mname(m)}.</span><button onclick="document.getElementById('nb').scrollIntoView({behavior:'smooth'})">Ver o que não bate</button></div>`:'<div class="alert ok"><span>Tudo bate pelo valor em '+mname(m)+'.</span></div>';
+return `${DEMO_BUILD&&D.some(e=>e.demo)?'<div class="demo">Dados de exemplo para você conhecer o novo visual. <button class="s" onclick="rmDemo()">Limpar exemplo e começar com seus dados</button></div>':''}${suspCard()}${estCard()}${bkOld&&DL?'<section class="cd"><div class="stt wn">Faz mais de 7 dias que você não baixa um backup dos lançamentos.</div><button class="s" onclick="bkp().then(render)">Baixar backup agora (.json)</button></section>':''}${al}${pbar()}${acumCard(c,d)}${kpis(c,rv,ds)}
+<div class="two">${calendar()}${revisar(p.pf)}</div>${lojaCard(p)}
+<details class="grp"><summary>Dia a dia do mês</summary>${diasLista()}</details>
+${fp==='mes'?`<details class="grp"><summary>Total no período (relatório do Ssotica)</summary>${totSec()}</details>`:''}
+<details class="grp"><summary>Crédito, Débito e Pix por forma</summary>${forma('Crédito',c)}${forma('Débito',c)}${forma('Pix',c)}${pixDet(p.pf)}${mumbucaCard(c)}${c.oth?forma('Outros',c):''}</details>
+<details class="grp" id="cxd"><summary>Caixa em dinheiro e ajustes</summary>${ajusteDia()}${apagaDia()}${fp==='mes'?diasDiv(p):''}${fp==='mes'?caixaDin():''}</details>`}
+async function expFech(){const p=per(),c=calc(p.pf),m=sel.slice(0,7),H=['','Master','Visa','Elo','American Express','Sem bandeira','Total'],bk=[...BR,''],rows=[['Fechamento '+p.label+(LF?' · '+LF:'')],[]];
+['Crédito','Débito'].forEach(k=>{const a=[ 'Stone',...bk.map(b=>c.S[k].Stone[b]),c.S[k].Stone.t],b=['Ssotica',...bk.map(x=>c.S[k].Ssotica[x]),c.S[k].Ssotica.t];rows.push([k,...H.slice(1)],a,b,['Diferença',...a.slice(1).map((x,i)=>x-b[i+1])],[])});
+const q=c.S.Pix;rows.push(['Pix','Total'],['Stone',q.Stone.t],['Ssotica',q.Ssotica.t],['Diferença',q.Stone.t-q.Ssotica.t],[],['Sem forma reconhecida','Total'],['Ssotica',c.oth]);
+const dd={};ins().filter(e=>e.date.startsWith(m)&&PS.includes(e.method)).forEach(e=>{const o=dd[e.date]=dd[e.date]||{st:0,ss:0};if(e.source==='Stone')o.st+=e.amount;else o.ss+=e.amount});
+const dr=[['Dia','Stone','Ssotica','Diferença','Situação'],...Object.keys(dd).sort().map(k=>{const o=dd[k],df=Math.round((o.st-o.ss)*100)/100;return [fd(k),o.st,o.ss,df,df===0?'Certo':'Diferença']})];
+const rv=revData(p.pf),pr=[['Tipo','Data','Forma','Valor','Detalhe'],...rv.oa.map(x=>['Entrou na Stone e não está no Ssotica',fd(x.e.date),lbl(x.e),x.e.amount,x.e.desc||x.e.cli||'']),...rv.ob.map(x=>['Lançado no Ssotica sem entrada na Stone',fd(x.e.date),lbl(x.e),x.e.amount,x.e.cli||x.e.desc||'']),...rv.br.map(x=>['Bandeira diferente',fd(x.e.date),'Stone '+lbl(x.q[0])+' · Ssotica '+lbl(x.q[1]),x.q[0].amount,'']),...rv.df.map(x=>['Valor diferente',fd(x.e.date),lbl(x.e),x.q[0].amount-x.q[1].amount,'Stone '+fn(x.q[0].amount)+' · Ssotica '+fn(x.q[1].amount)])];
+const wb=XLSX.utils.book_new(),add=(r,n,w)=>{const ws=XLSX.utils.aoa_to_sheet(r);ws['!cols']=w;XLSX.utils.book_append_sheet(wb,ws,n)};
+add(rows,'Fechamento',[{wch:22},...Array(6).fill({wch:16})]);add(dr,'Dias do mês',[{wch:12},{wch:16},{wch:16},{wch:16},{wch:14}]);add(pr,'Pendências',[{wch:38},{wch:12},{wch:20},{wch:14},{wch:50}]);
+try{await DL.save({filename:'Fechamento '+(fp==='dia'?sel:m)+'.xlsx',data:XLSX.write(wb,{bookType:'xlsx',type:'array'})});msg('Planilha salva.')}catch(e){if(!e||e.code!=='declined')msg('Não foi possível salvar a planilha neste modo de visualização.')}}
+
+/* ---------- caixa do Ssotica ---------- */
+function ssTab(){const p=per(),c=calc(p.pf),r=match(),st=new Map(),d=c.st-c.ss;
+r.ok.forEach(q=>st.set(q[1],{k:'ok',a:q[0]}));r.df.forEach(q=>st.set(q[1],{k:'df',a:q[0]}));
+const rows=D.filter(e=>inL(e)&&!isEst(e)&&e.source==='Ssotica'&&p.pf(e)).sort((a,b)=>(a.date+(a.hora||'')).localeCompare(b.date+(b.hora||''))),ent=rows.filter(e=>e.type==='in'),sai=rows.filter(e=>e.type==='out'),sm=l=>l.reduce((t,e)=>t+e.amount,0);
+const by=(l,f)=>{const m={};l.forEach(e=>{const k=f(e)||'Sem informação',o=m[k]=m[k]||{n:0,v:0};o.n++;o.v+=e.amount});return Object.entries(m).sort((a,b)=>b[1].v-a[1].v)};
+const grid=(t,l)=>`<div><div class="mu" style="margin-bottom:2px">${t}</div>${l.map(([k,o])=>`<div class="li"><span>${esc(k)} <span class="mu">(${o.n})</span></span><span class="mono">${fn(o.v)}</span></div>`).join('')||'<span class="mu">—</span>'}</div>`;
+const bank=e=>['Pix','Débito','Crédito'].includes(e.method);
+const stat=e=>{if(e.type==='out')return '<span class="chip n">Saída</span>';if(e.agg)return '<span class="chip n">Resumo do dia</span>';if(!bank(e))return '<span class="chip n">Não passa pela Stone</span>';const s=st.get(e);return !s?'<span class="chip bad">Sem entrada na Stone</span>':s.k==='ok'?'<span class="chip ok">Confere com a Stone</span>':`<span class="chip wn">Stone recebeu ${fn(s.a.amount)}</span>`};
+const row=e=>{const s=st.get(e),prob=e.type==='in'&&!e.agg&&bank(e)&&(!s||s.k==='df');return `<div class="li"><span>${fd(e.date)}${e.hora?' '+e.hora:''} · ${esc(e.cat||'Lançamento')}${e.os?' nº '+esc(e.os):''}${e.parc?' · parcela '+esc(e.parc):''}<br><span class="mu">${[lbl(e),e.dest].filter(Boolean).map(esc).join(' · ')}${LF?'':' · '+esc(ljName(e.loja))}</span><br>${stat(e)}${prob&&(e.cli||e.desc)?` <span class="mu">Pode ser: ${esc(e.cli||e.desc)}</span>`:''}</span><span class="mono ${e.type==='in'?'':'bad'}">${fn(e.amount)} ${e.type==='in'?'C':'D'}</span></div>`};
+const stt=!c.n?'<div class="stt n">Sem entradas da Stone ou do Ssotica neste período. Use Importar.</div>':z(d)?'<div class="stt ok">Bate certinho</div>':d>0?`<div class="stt bad">Sobra ${fm(d)}: entrou na Stone mais do que foi lançado no Ssotica</div>`:`<div class="stt wn">Faltam ${fm(-d)} na Stone: lançado a mais no Ssotica</div>`;
+return `${pbar()}
+<section class="cd hero"><h2>Stone x Ssotica em ${p.label}</h2><div class="hn"><div><div class="mu">Stone</div><div class="mono">${fm(c.st)}</div></div><div><div class="mu">Ssotica</div><div class="mono">${fm(c.ss)}</div></div><div><div class="mu">Diferença</div><div class="mono ${z(d)?'ok':'bad'}">${z(d)?'R$ 0,00':(d>0?'+':'−')+fm(Math.abs(d))}</div></div></div>${stt}${c.useT?'<span class="mu">Ssotica: usando só o Total no Período importado. Os valores dos dias não são somados a ele.</span>':''}</section>
+${revisar(p.pf)}
+<section class="cd"><h2>Entradas do caixa Ssotica</h2><div class="hn"><div><div class="mu">Entradas (C)</div><div class="mono">${fm(sm(ent))}</div></div><div><div class="mu">Saídas (D)</div><div class="mono">${fm(sm(sai))}</div></div><div><div class="mu">Lançamentos</div><div class="mono">${rows.length}</div></div></div>
+<div class="g">${grid('Categoria',by(ent,e=>e.cat))}${grid('Forma de pagamento',by(ent,e=>lbl(e)))}</div></section>
+<section class="cd"><h2>Lançamentos do caixa</h2>${rows.map(row).join('')||'<span class="mu">Nenhum lançamento do Ssotica neste período. Use Importar com a foto, PDF ou Excel da Movimentação do caixa.</span>'}</section>`}
+
+/* ---------- entradas e despesas ---------- */
+function formManual(t,dm,ds){const nm=t==='in'?'entrada':'despesa';
+return `<details class="cd"><summary>Lançar ${nm} manualmente</summary><div class="g" style="margin-top:10px">
+<div><label for="fdt">Data</label><input type="date" id="fdt" value="${sel}"></div>
+<div><label for="fv">Valor (R$)</label><input type="number" step="0.01" min="0" id="fv" inputmode="decimal"></div>
+<div><label for="fs">Origem</label><select id="fs">${['Stone','Ssotica','Mumbuca'].map(x=>`<option ${x===ds?'selected':''}>${x}</option>`).join('')}</select></div>
+<div><label for="fm">Forma</label><select id="fm">${['Pix','Boleto','Débito','Crédito','Dinheiro','Mumbuca','Outro'].map(x=>`<option ${x===dm?'selected':''}>${x}</option>`).join('')}</select></div>
+<div><label for="fb">Bandeira (cartão)</label><select id="fb"><option value="">Sem bandeira</option>${BR.map(k=>`<option>${k}</option>`).join('')}</select></div>
+<div><label for="fl">Loja</label><select id="fl">${LJ.map(k=>`<option ${k===LF?'selected':''}>${k}</option>`).join('')}</select></div></div>
+<div style="margin:8px 0"><label for="fo">Descrição</label><input id="fo" placeholder="Cliente, fornecedor, observação"></div>
+<button class="b" onclick="add('${t}')">Adicionar ${nm}</button></details>`}
+let mf='',mb='',srcF='';
+
+/* ---------- contas a pagar (despesas) ---------- */
+const gO=e=>e.method==='Pix'?'Pix':e.method==='Boleto'?'Boleto':'Outros';
+const isOutra=e=>OF==='stone'&&e.source!=='Stone'&&e.conta&&!/stone/i.test(e.conta);
+function outsL(){return D.filter(e=>e.type==='out'&&inL(e)&&!e.canc&&!isEst(e)&&!e.agg&&!e.adj&&e.source!=='Mumbuca'&&!isOutra(e))}
+function setOF(v){OF=v;try{localStorage.setItem('pag6',v)}catch(e){}render()}
+function ofSel(m){const g={};D.filter(e=>e.type==='out'&&e.source!=='Stone'&&inL(e)&&!e.canc&&!isEst(e)&&e.date.startsWith(m)&&e.conta).forEach(e=>{g[e.conta]=(g[e.conta]||0)+1});const k=Object.entries(g);return `<div class="cd"><div class="sel2"><label for="ofs" style="margin:0">Contas do Ssotica comparadas com a Stone</label><select id="ofs" onchange="setOF(this.value)"><option value="all" ${OF==='all'?'selected':''}>Todas as contas do arquivo</option><option value="stone" ${OF==='stone'?'selected':''}>Só a conta Stone</option></select></div>${k.length?`<span class="mu">Contas no arquivo do Ssotica: ${k.map(x=>esc(x[0])+' ('+x[1]+')').join(' · ')}. "Só a conta Stone" considera as contas com Stone no nome; as outras ficam em Pagas por outras contas.</span>`:'<span class="mu">O arquivo do Ssotica importado não traz o nome da conta. Importe o relatório de saídas com a coluna Conta para usar o filtro.</span>'}</div>`}
+function matchOut(l){const A=l.filter(e=>e.source==='Stone'),B=l.filter(e=>e.source!=='Stone'),ua=new Set(A),ub=new Set(B),ok=[];
+const ex=[];for(const a of A)for(const b of B){if((b.loja||'')!==(a.loja||'')||cents(b)!==cents(a))continue;const dd=Math.abs(dn(b.date)-dn(a.date));if(dd>tolD)continue;ex.push([dd,a,b])}
+ex.sort((x,y)=>x[0]-y[0]);for(const q of ex)if(ua.has(q[1])&&ub.has(q[2])){ua.delete(q[1]);ub.delete(q[2]);ok.push(q)}
+return{ok,oa:A.filter(a=>ua.has(a)),ob:B.filter(b=>ub.has(b))}}
+function contas(){const p=per(),m=p.m,[Y,M]=m.split('-').map(Number),nd=new Date(Y,M,0).getDate(),wd=['dom','seg','ter','qua','qui','sex','sáb'];
+const L0=outsL().filter(e=>e.date.startsWith(m)),outras=D.filter(e=>e.type==='out'&&inL(e)&&!e.canc&&!isEst(e)&&!e.agg&&!e.adj&&e.source!=='Mumbuca'&&isOutra(e)&&e.date.startsWith(m)),L=L0.filter(e=>!outras.includes(e)),PB=L,G=['Pix','Boleto','Outros'],S={},A={};G.forEach(g=>{S[g]=0;A[g]=0});
+L.forEach(e=>{(e.source==='Stone'?S:A)[gO(e)]+=e.amount});
+const St=S.Pix+S.Boleto+S.Outros,At=A.Pix+A.Boleto+A.Outros,dd={};
+PB.forEach(e=>{const o=dd[e.date]=dd[e.date]||{st:0,ss:0,ot:0};if(e.source==='Stone')o.st+=e.amount;else o.ss+=e.amount});
+const OT=outras.concat(L.filter(e=>!PB.includes(e)&&e.source!=='Stone'));OT.forEach(e=>{const o=dd[e.date]=dd[e.date]||{st:0,ss:0,ot:0};o.ot+=e.amount});const ot=OT.reduce((t,e)=>t+e.amount,0),kf=v=>v>=10000?(Math.round(v/100)/10).toString().replace('.',',')+'k':Math.round(v).toString();
+const df=(x,y)=>{const d=Math.round((x-y)*100)/100;return `<span class="${d===0?'ok':'bad'}">${d===0?'✓ bate':fs(d)}</span>`};
+const row=(n,x,y)=>`<div class="r"><span>${n}</span><span>${fn(x)}</span><span>${fn(y)}</span><span></span></div>`;
+const r=matchOut(PB.filter(e=>e.date.startsWith(m))),UN={};r.oa.concat(r.ob).forEach(e=>{UN[e.date]=(UN[e.date]||0)+1});
+const fw=new Date(Y,M-1,1).getDay();let cal=['D','S','T','Q','Q','S','S'].map(x=>`<div class="h">${x}</div>`).join('')+Array(fw).fill('<i></i>').join(''),ok=0,bd=0,lst='';
+for(let d=1;d<=nd;d++){const k=m+'-'+pad(d),o=dd[k],has=o&&(o.st||o.ss),hasO=o&&o.ot,x=has?o.st-o.ss:0,un=UN[k]||0,cl=has?(z(x)&&!un?'ok':'bad'):hasO?'ot':'';if(cl==='ok')ok++;if(cl==='bad')bd++;
+cal+=`<button class="${cl}${fp==='dia'&&sel===k?' on':''}" aria-label="Dia ${d}" onclick="fp='dia';sel='${k}';render()"><span>${d}</span><small>${has?(z(x)?(un?un+' ≠':'✓'):(x>0?'+':'−')+Math.round(Math.abs(x))):hasO?kf(o.ot):''}</small></button>`;
+if(!has&&hasO)lst+=`<button class="ot" onclick="fp='dia';sel='${k}';render()"><span>${pad(d)}/${pad(M)} ${wd[new Date(Y,M-1,d).getDay()]}</span><span class="v">Pago em outras contas/formas (Ssotica)</span><b>${fm(o.ot)}</b></button>`;
+if(has)lst+=`<button class="${cl}${fp==='dia'&&sel===k?' on':''}" onclick="fp='dia';sel='${k}';render()"><span>${pad(d)}/${pad(M)} ${wd[new Date(Y,M-1,d).getDay()]}</span><span class="v">Pago na Stone ${fm(o.st)} · PAGO NA SSOTICA ${fm(o.ss)}${o.ot?' · outras contas '+fm(o.ot):''}</span><b>${z(x)?(un?un+' a revisar':'✓ certo'):(x>0?'pago a mais ':'falta pagar ')+fm(Math.abs(x))}</b></button>`}
+const oaS=new Set(r.oa),obS=new Set(r.ob),dayL=fp==='dia'&&sel.startsWith(m)?PB.filter(e=>e.date===sel).sort((a,b)=>a.source.localeCompare(b.source)):[];
+const dayCard=fp==='dia'&&sel.startsWith(m)?`<section class="cd"><div class="fh"><h2>Detalhe do dia ${fd(sel)}</h2><button class="s" onclick="fp='mes';render()">Ver o mês</button></div>${dayL.length?dayL.map(e=>`<div class="li"><span>${e.source==='Stone'?'Pago na Stone':'PAGO NA SSOTICA'} · ${esc(e.method)}<br>${oaS.has(e)?'<span class="chip bad">Saiu da Stone e não está no PAGO NA SSOTICA</span>':obS.has(e)?'<span class="chip wn">Lançado sem saída na Stone</span>':'<span class="chip ok">Confere</span>'}<br><span class="mu">${esc((e.desc||'').slice(0,90))}</span></span><span class="mono"><b>${fn(e.amount)}</b></span></div>`).join(''):'<span class="mu">Sem contas neste dia.</span>'}</section>`:'';
+const lb=e=>esc(e.method)+' de '+fm(e.amount),ds=e=>esc((e.desc||'').slice(0,60));
+const items=[...r.oa.map(e=>`<div class="li"><span><b>${lb(e)} pago na Stone sem conta lançada</b><br><span class="bad">Saiu da Stone em ${fd(e.date)} e não está no PAGO NA SSOTICA.</span><br><span class="mu">${ds(e)}</span></span><span class="mono bad">+${fn(e.amount)}</span><div class="acs"><button class="s" onclick="lancSs('${e.id}')">Lançar no PAGO NA SSOTICA</button><button class="s" onclick="ignC('${e.id}')">Ignorar (não é conta)</button><button class="s" onclick="fp='dia';sel='${e.date}';render()">Ver dia</button></div></div>`),
+...r.ob.map(e=>`<div class="li"><span><b>${lb(e)} lançado sem saída na Stone</b><br><span class="wn">Conta de ${fd(e.date)} (${esc(e.source)}) sem pagamento na conta.</span><br><span class="mu">${ds(e)}</span></span><span class="mono wn">−${fn(e.amount)}</span><div class="acs">${(()=>{const c=r.oa.filter(a=>(a.loja||'')===(e.loja||'')&&Math.abs(dn(a.date)-dn(e.date))<=Math.max(tolD,3)).sort((x,y)=>Math.abs(x.amount-e.amount)-Math.abs(y.amount-e.amount))[0];return c?`<button class="s" onclick="igualaSs('${e.id}',${c.amount})">Corrigir valor para ${fm(c.amount)} (Stone)</button>`:''})()}<button class="s" onclick="ignC('${e.id}')">Ignorar (cancelar)</button><button class="s" onclick="del('${e.id}')">Apagar</button><button class="s" onclick="fp='dia';sel='${e.date}';render()">Ver dia</button></div></div>`)];
+return `${pbar()}${ofSel(m)}
+<details class="cd" ${files.length?'open':''}><summary>Importar contas pagas</summary><span class="mu">Carregue o extrato da Stone (só as saídas entram aqui), o relatório de contas do Ssotica ou uma planilha Excel, PDF ou foto. Ao importar de novo o mesmo período, o arquivo antigo é substituído.</span>
+<div class="dz"><input type="file" id="fi" multiple accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp" onchange="loadFiles(this.files,true)" aria-label="Escolher arquivos de contas pagas"></div><div id="pv"></div></details>
+<section class="cd"><div class="fh"><h2>Contas pagas · ${mname(m)}</h2>${!St&&!At&&ot?'<span class="chip n">Só outras contas</span>':chip(St,At)}</div>
+<span class="mu">Pix e boleto que saíram da Stone x PAGO NA SSOTICA (arquivo ou lançamento manual). A diferença aparece só no Total: Stone (Pix + boleto) menos o total PAGO NA SSOTICA.</span>
+<div class="r hd"><span></span><span>Pago na Stone</span><span>PAGO NA SSOTICA</span><span>Dif.</span></div>${row('Pix',S.Pix,A.Pix)}${row('Boleto',S.Boleto,A.Boleto)}${S.Outros||A.Outros?row('Outras formas / sem forma',S.Outros,A.Outros):''}<div class="r t"><span>Total</span><span>${fn(St)}</span><span>${fn(At)}</span>${df(St,At)}</div>
+${ot?`<div class="r"><span>Outras contas e formas</span><span>—</span><span>${fn(ot)}</span><span class="mu">fora da Stone</span></div>`:''}
+${A.Outros?`<span class="mu">"Sem forma no arquivo": contas do PDF do Ssotica sem Pix ou boleto na descrição. Contam como PAGO NA SSOTICA e são comparadas com a Stone pelo valor.</span>`:''}</section>
+${dayCard}
+<section class="cd"><div class="fh"><h2>Quadro dos dias</h2><span class="mu"><b class="ok">${ok} certos</b> · <b class="bad">${bd} com diferença</b></span></div><div class="cal">${cal}</div>
+<span class="mu">Azul: dia com contas pagas em outros bancos ou formas (valor em reais, k = mil), sem comparação com a Stone. Verde: o que saiu da Stone no dia é igual ao PAGO NA SSOTICA. Vermelho: diferença do dia, em reais (+ pago a mais na Stone, − conta lançada sem pagamento).</span></section>
+${outras.length?(()=>{const g={};outras.forEach(e=>{const k=e.conta;(g[k]=g[k]||{n:0,v:0}).n++;g[k].v+=e.amount});return `<section class="cd"><h2>Pagas por outras contas</h2><span class="mu">Estas contas do Ssotica saíram de outro banco, não da Stone. Ficam fora da conferência com o extrato da Stone.</span>${Object.entries(g).map(([k,x])=>`<div class="li"><span>${esc(k)}<br><span class="mu">${x.n} contas</span></span><span class="mono">${fn(x.v)}</span></div>`).join('')}<div class="r t"><span>Total</span><span></span><span></span><span>${fn(outras.reduce((t,e)=>t+e.amount,0))}</span></div></section>`})():''}
+${lst?`<section class="cd"><h2>Dia a dia</h2><div class="dl">${lst}</div></section>`:''}
+<section class="cd"><div class="fh"><h2>O que não bate</h2><select id="tl" aria-label="Diferença de data aceita" style="width:auto" onchange="tolD=+this.value;render()">${[[0,'Mesmo dia'],[1,'Até 1 dia'],[2,'Até 2 dias'],[3,'Até 3 dias'],[5,'Até 5 dias'],[10,'Até 10 dias']].map(o=>`<option value="${o[0]}" ${o[0]===tolD?'selected':''}>${o[1]}</option>`).join('')}</select></div>
+${items.length?`<span class="mu">${items.length} para revisar · ${r.ok.length} conferidos pelo valor</span>${items.slice(0,60).join('')}`:`<div class="stt ok">Tudo bate pelo valor${r.ok.length?' ('+r.ok.length+' pagamentos conferidos)':''}</div>`}</section>`}
+function outUn(){const m=sel.slice(0,7),r=matchOut(outsL().filter(e=>e.date.startsWith(m)));return new Set(r.oa.concat(r.ob))}
+function lista(t){const IMPE=t==='in'?importBox('ent','Entradas','Extrato da conta Stone, relatório de vendas no cartão, Movimentação do caixa do Ssotica ou Total no Período. O app reconhece o tipo do arquivo.'):'';const UNS=t==='out'?outUn():new Set(),p=per(),all=D.filter(e=>e.type===t&&inL(e)&&!isEst(e)),l0=all.filter(p.pf).sort((a,b)=>b.date.localeCompare(a.date)),l=l0.filter(e=>(!mf||e.method===mf)&&(!mb||e.brand===mb)),ls=(t==='in'?l.filter(e=>e.source==='Stone'):l).filter(e=>!e.canc),a=agg(ls),nm=t==='in'?'Entradas na Stone':'Despesas';
+const days=[...new Set(ls.map(e=>e.date))].sort().reverse();
+return `${pbar()}
+<section class="cd"><h2>${nm} em ${p.label}${mf||mb?' · '+[mf,mb].filter(Boolean).join(' ')+'':''}</h2><div class="g"><div><label for="mfS">Forma de pagamento</label><select id="mfS" onchange="mf=this.value;if(!isCard(mf))mb='';render()">${[['','Todas'],['Pix','Pix'],['Boleto','Boleto'],['Crédito','Crédito'],['Débito','Débito'],['Dinheiro','Dinheiro'],['Mumbuca','Mumbuca'],['Outro','Outro']].map(o=>`<option value="${o[0]}" ${o[0]===mf?'selected':''}>${o[1]}</option>`).join('')}</select></div><div><label for="mbS">Bandeira</label><select id="mbS" onchange="mb=this.value;render()"><option value="">Todas</option>${BR.map(b=>`<option ${b===mb?'selected':''}>${b}</option>`).join('')}</select></div></div><div class="mono" style="font-size:24px;font-weight:600">${fm(a.tot)}</div>
+<div class="r hd"><span></span><span>Pix</span><span>Cartão</span><span>Outros</span></div>${t==='in'?(()=>{const sa=agg(ins().filter(e=>e.source==='Ssotica'&&p.pf(e)&&(!mf||e.method===mf)&&(!mb||e.brand===mb))),df=(x,y)=>{const d=Math.round((x-y)*100)/100;return `<span class="${d===0?'ok':'bad'}">${d===0?'✓ bate':fs(d)}</span>`};return `<div class="r"><span>Stone</span><span>${fn(a.pix)}</span><span>${fn(a.card)}</span><span>${fn(a.oth)}</span></div><div class="r"><span>Ssotica</span><span>${fn(sa.pix)}</span><span>${fn(sa.card)}</span><span>${fn(sa.oth)}</span></div><div class="r t"><span>Diferença</span>${df(a.pix,sa.pix)}${df(a.card,sa.card)}${df(a.oth,sa.oth)}</div><span class="mu">Diferença = Stone menos Ssotica. Total Stone ${fm(a.tot)} · Ssotica ${fm(sa.tot)} · diferença ${fs(Math.round((a.tot-sa.tot)*100)/100)}.</span>`})():`<div class="r t"><span>Total</span><span>${fn(a.pix)}</span><span>${fn(a.card)}</span><span>${fn(a.oth)}</span></div>`}
+${fp==='mes'&&days.length?`<details><summary>Por dia</summary>${days.map(d=>{const x=agg(ls.filter(e=>e.date===d));return `<div class="li"><span>${fd(d)}</span><span class="mono">${fm(x.tot)}</span></div>`}).join('')}</details>`:''}</section>
+${t==='in'?cmCard():''}${t==='in'?revisar(p.pf):''}
+${formManual(t)}
+<section class="cd"><h2>Lançamentos${mf||mb||srcF?' ('+l.filter(e=>!srcF||e.source===srcF).length+')':''}</h2><div class="lg">${[['Stone','var(--ok)'],['Ssotica','#2f62d6'],['Mumbuca','#c26a12']].filter(o=>!srcF||srcF===o[0]).map(o=>`<button class="lgb${srcF===o[0]?' on':''}" onclick="srcF=srcF==='${o[0]}'?'':'${o[0]}';render()" aria-pressed="${srcF===o[0]}"><i style="background:${o[1]}"></i>${o[0]}${srcF===o[0]?' ✕':''}</button>`).join('')}</div>${l.filter(e=>!srcF||e.source===srcF).slice(0,80).map(e=>`<details class="dt"><summary class="li ${e.canc?'cn':(t==='out'&&UNS.has(e))?'fp':isCM(e)?'fy':e.source==='Stone'?'fs':e.source==='Mumbuca'?'fm':'fz'}"><span>${e.canc?'<span class="chip n">Cancelado</span> ':''}${t==='out'&&UNS.has(e)?'<span class="chip pu">Não bate</span> ':''}${isCM(e)?'<span class="chip wn">CENTRO MARICÁ</span> ':''}${fd(e.date)} · ${esc(ljName(e.loja))} · ${esc(e.source)} · ${esc(e.method)}${e.brand?' · '+esc(short(e.brand)):''}<br><span class="mu">${esc(e.desc||'')}</span></span><span class="mono"><b>${fn(e.amount)}</b> ›</span></summary>${detBody(e)}</details>`).join('')||'<span class="mu">Nenhum lançamento neste período.</span>'}</section>${IMPE}`}
+function cmCard(){const l=D.filter(e=>isCM(e)&&inL(e)).sort((a,b)=>b.date.localeCompare(a.date));if(!l.length)return '';const sm=l.reduce((t,e)=>t+e.amount,0);
+return `<section class="cd"><div class="fh"><h2>Pix de CENTRO MARICÁ</h2><span class="chip wn">${l.length} · ${fm(sm)}</span></div><span class="mu">Entradas de Pix da Stone com CENTRO MARICÁ no nome, marcadas em amarelo. Veja uma a uma e apague só as que não devem contar (por exemplo, transferência entre lojas). Se quiser manter, não faça nada.</span>
+${l.map(e=>`<div class="li fy"><span>${fd(e.date)} · ${esc(ljName(e.loja))}<br><span class="mu" style="color:inherit">${esc(e.desc||'')}</span></span><span class="mono"><b>${fn(e.amount)}</b> <button class="x" aria-label="Apagar este Pix" onclick="del('${e.id}')">✕</button></span></div>`).join('')}
+${wipe==='CM'?`<div class="stt bad">Apagar os ${l.length} Pix de CENTRO MARICÁ (${fm(sm)})? Não dá para desfazer.</div><div class="g"><button class="b" onclick="wGo()">Sim, apagar todos</button><button class="s" onclick="wNo()">Cancelar</button></div>`:`<button class="s" onclick="wAsk('CM')">Apagar todos os ${l.length} de uma vez</button>`}</section>`}
+function agg(l){const r={pix:0,card:0,oth:0,tot:0};l.forEach(e=>{if(e.method==='Pix')r.pix+=e.amount;else if(isCard(e.method))r.card+=e.amount;else r.oth+=e.amount;r.tot+=e.amount});return r}
+function add(t){const v=parseFloat($('#fv').value),d=$('#fdt').value;
+if(!d||!(v>0)){msg('Informe a data e um valor maior que zero.');return}
+D.push({id:Date.now()+''+Math.random().toString(36).slice(2,6),date:d,type:t,source:$('#fs').value,loja:$('#fl').value,method:$('#fm').value,brand:isCard($('#fm').value)?$('#fb').value:'',amount:v,desc:$('#fo').value.trim(),manual:true});
+sel=d;save();render();msg('Lançamento adicionado.')}
+function del(id){D=D.filter(e=>e.id!==id);save();render()}
+
+/* ---------- leitura de arquivos ---------- */
+function pn(v){if(typeof v==='number')return v;let s=String(v).trim();if(!s)return NaN;const neg=/^\(.*\)$/.test(s)||/^-|-$/.test(s)||/^R\$\s*-/.test(s);s=s.replace(/[^\d.,]/g,'');if(!s)return NaN;if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if((s.match(/\./g)||[]).length>1)s=s.replace(/\./g,'');const n=parseFloat(s);return neg?-n:n}
+function pd(v){if(v instanceof Date){const u=new Date(v.getTime()+432e5);return u.getUTCFullYear()+'-'+pad(u.getUTCMonth()+1)+'-'+pad(u.getUTCDate())}
+const s=String(v).trim();let m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+if(m)return(m[3].length==2?'20'+m[3]:m[3])+'-'+pad(m[2])+'-'+pad(m[1]);
+m=s.match(/(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:null}
+const gb=s=>/master/i.test(s)?'Mastercard':/visa/i.test(s)?'Visa':/\belo\b/i.test(s)?'Elo':/amex|american/i.test(s)?'American Express':'';
+const gm=s=>/mumbuca/i.test(s)?'Mumbuca':/pix/i.test(s)?'Pix':/boleto|c[oó]d(igo)?\.? de barras|conv[eê]nio/i.test(s)?'Boleto':/d[ée]bito/i.test(s)?'Débito':/cr[ée]dito/i.test(s)?'Crédito':/dinheiro|esp[ée]cie/i.test(s)?'Dinheiro':'Outro';
+const STOP=/\b(Recebimento|Credi[aá]rio|Adiantamento|Ordem|Servi[cç]o|Vendas?|Banco|Caixa|Pix|Parcela|Cr[ée]dito|D[ée]bito|Master|Mastercard|Visa|Elo|Amex|American|Express)\b/gi;
+function mkDesc(x){return [x.cli,x.os?'nº '+x.os:'',x.cat,x.parc?'parc. '+x.parc:''].filter(Boolean).join(' · ')}
+const APAG=/venda\s+apagada|informa[cç][õo]es\s+sobre\s+a\s+exclus/i,EST=/estorn/i;
+function parseRec(t){t=t.replace(/\s+/g,' ');
+if(/saldo\s*(inicial|final|anterior)/i.test(t))return null;
+const date=pd(t);if(!date)return null;
+const vm=[...t.matchAll(/(\d+(?:\.\d{3})*,\d{2})\s*([CD])\b/g)].pop();let amount,cd=null;
+if(vm){amount=pn(vm[1]);cd=vm[2]}else{const ms=t.match(/\d+(?:\.\d{3})*,\d{2}/g);if(!ms)return null;amount=pn(ms[ms.length-1])}
+if(isNaN(amount))return null;
+const hora=(t.match(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/)||[])[0]||'';
+const cat=/Recebimento/i.test(t)&&/Credi[aá]rio/i.test(t)?'Recebimento Crediário':/Adiantamento/i.test(t)?'Adiantamento Ordem Serviço':/\bVendas?\b/i.test(t)?'Vendas':((t.match(/Devolu[cç][aã]o|Sangria|Suprimento|Despesas?/i)||[])[0]||'');
+const usr=(t.match(/\b[A-Za-z]{2,}\.[A-Za-z0-9]+\b/)||[])[0]||'';
+const dest=/Banco/i.test(t)?'Banco':/\bCaixa\b/i.test(t)?'Caixa':'';
+const pm=t.match(/Parcela\s+(\d+)\s+de\s+(\d+)/i),parc=pm?pm[1]+'/'+pm[2]:'';
+const rest=t.replace(/\d{2}\/\d{2}\/\d{2,4}/g,' ').replace(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/g,' ').replace(/\d+(?:\.\d{3})*,\d{2}(?:\s*[CD]\b)?/g,' ').replace(usr||'§',' ').replace(/Parcela\s+\d+\s+de\s+\d+/i,' ').replace(STOP,' ').replace(/\s+/g,' ').trim();
+const m2=rest.match(/^([^\d]+?)\s+(\d{2,7})\b/),cli=(m2?m2[1]:rest.replace(/[\d,.].*$/,'')).trim(),os=m2?m2[2]:'';
+const x={date,amount:cd==='D'?-amount:amount,cd,out:cd==='D',method:gm(t.replace(/Credi[aá]rio/gi,'')),brand:gb(t),cli,os,cat,parc,hora,usr,dest};
+x.desc=mkDesc(x).slice(0,100);if(APAG.test(t))x.apag=true;if(EST.test(t)){x.apag=true;if(!APAG.test(t))x.est=true}return x}
+
+function fromRows(rows){let hi=-1;
+for(let i=0;i<Math.min(rows.length,30);i++){const t=rows[i].map(c=>String(c).toLowerCase());if(t.some(c=>/data/.test(c))&&t.some(c=>/valor|total|montante|l[ií]quido|bruto/.test(c))){hi=i;break}}
+let di=0,vi=-1,ti=-1,sx=false;
+if(hi>=0){const h=rows[hi].map(c=>String(c).toLowerCase());di=h.findIndex(c=>/data/.test(c));vi=h.findIndex(c=>/valor|montante/.test(c));if(vi<0)vi=h.findIndex(c=>/total|l[ií]quido|bruto/.test(c));ti=h.findIndex(c=>/^tipo|movimenta/.test(c));sx=h.some(c=>/categoria/.test(c))&&h.some(c=>/hist[oó]rico/.test(c))}
+const out=[];let skip=false;
+for(let i=hi+1;i<rows.length;i++){const r=rows[i],first=String(r.find(c=>String(c).trim())??'').trim();
+if(/^(entradas|sa[ií]das|resumo|posi[cç][aã]o|caixa (aberto|fechado)|transf)/i.test(first)){skip=true;continue}
+if(skip){if(r[di] instanceof Date||/^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(String(r[di]??'').trim()))skip=false;else continue}
+const d=pd(r[di]??'');if(!d){if(sx&&out.length&&APAG.test(r.join(' ')))out[out.length-1].apag=true;continue}
+if(sx){const t=(typeof r[di]==='string'?r[di]:fd(d))+' '+r.map((c,j)=>j===di?'':(c instanceof Date?'':(j===vi&&typeof c==='number'?c.toFixed(2).replace('.',','):String(c)))).join(' ');const x=parseRec(t);if(x)out.push(x);continue}
+let v=NaN;if(vi>=0)v=pn(r[vi]??'');else for(let j=0;j<r.length;j++){if(j!==di&&(typeof r[j]==='number'||/,\d{2}/.test(String(r[j])))){v=pn(r[j]);vi=j;break}}
+if(isNaN(v))continue;
+const raw=String(r[vi]??''),cd=/\bD\s*$/.test(raw)?'D':/\bC\s*$/.test(raw)?'C':null;if(/saldo\s*(inicial|final|anterior)/i.test(r.join(' ')))continue;
+const tp=ti>=0?String(r[ti]):'';
+out.push({date:d,amount:v,desc:r.filter((c,j)=>j!==di&&j!==vi&&typeof c==='string'&&c.trim()&&!/^-?[\d.]+,\d{2}\s*[CD]?$/.test(c.trim())).join(' · ').slice(0,80),method:gm(r.join(' ')),brand:gb(r.join(' ')),out:/sa[ií]da|despesa/i.test(tp)||cd==='D',cd,...(EST.test(r.join(' '))?{apag:true,est:true}:{})})}
+return out}
+function parseTotDoc(lines,strict){const money=/^(.*?)\s*R\$\s*(\d+(?:\.\d{3})*,\d{2})\s*$/,blocks=[{date:null,items:[],total:0}];let cur=blocks[0],hasT=false,hasDate=false;
+for(const raw of lines){const t=String(raw).replace(/\s+/g,' ').trim();if(!t)continue;
+if(/total no per[ií]odo/i.test(t)||/^recebido\b/i.test(t))hasT=true;
+if(/^\d{2}\/\d{2}\/\d{2,4}/.test(t))hasDate=true;
+const dm=t.match(/^Dia\s+(\d{1,2}\/\d{1,2}\/\d{2,4})/i);
+if(dm){cur={date:pd(dm[1]),items:[],total:0};blocks.push(cur);hasT=true;continue}
+const segs=[...t.matchAll(/((?:(?!R\$).)*?)\s*R\$\s*(\d+(?:\.\d{3})*,\d{2})/g)];
+for(const sg of segs){const lab=sg[1].trim(),v=pn(sg[2]);if(!lab||isNaN(v))continue;
+if(/^(recebido|total)/i.test(lab)){if(!cur.total)cur.total=v;continue}
+if(/^(vendas\s+credi|credi[aá]rio|carn[eê]\s*$|sa[ií]da|saldo|posi[cç]|entradas|resumo|recebimento|adiantamento|transf)/i.test(lab)||/^\d{2}\//.test(lab))continue;
+cur.items.push({label:lab,method:gm(lab),brand:gb(lab),amount:v})}}
+const per=blocks[0],days=blocks.slice(1).filter(b=>b.date&&b.items.length);
+if(!(hasT&&(per.items.length||days.length))&&(strict||per.items.length<3||hasDate))return null;
+const out=per.items;out.tot=true;out.total=per.total;out.days=days;return out}
+function parseLines(lines){const out=[];
+if(lines.some(l=>/Pagamento recebido:/i.test(l))&&lines.some(l=>/mumbuca/i.test(l))){
+const MS={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};let cur=null;
+for(const t of lines){const dm=t.match(/^(\d{1,2})\s+de\s+([A-Za-zçÇ]+)\s+de\s+(\d{4})\s*$/);
+if(dm){const mo=MS[dm[2].normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().slice(0,3)];cur=mo?dm[3]+'-'+pad(mo)+'-'+pad(dm[1]):null;continue}
+const m=t.match(/^Pagamento recebido:\s*(.*?)\s*\+\s*R\$\s*(\d+(?:\.\d{3})*,\d{2})\s*$/i);
+if(m&&cur)out.push({date:cur,amount:pn(m[2]),out:false,cd:null,mumb:true,method:'Mumbuca',brand:'',cli:m[1].replace(/^[*.\d-]+\s*/,'').trim().slice(0,60),desc:'Pagamento recebido · '+m[1].replace(/^[*.\d-]+\s*/,'').trim().slice(0,50)})}
+out.lojaHint=gl(lines.slice(0,12).join(' '));return out}
+if(lines.some(l=>/data da venda/i.test(l))&&lines.some(l=>/bandeira/i.test(l))&&lines.some(l=>/produto/i.test(l))){
+/* relatório de vendas no cartão da Stone: data da venda, bandeira, produto, valor bruto */
+const vr=/R\$\s*(\d+(?:\.\d{3})*,\d{2})/,sr=/^(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})\b\s*(.*)$/;
+lines.forEach((t,i)=>{const m=t.match(sr);if(!m)return;let rest=m[3],v=rest.match(vr);
+for(let j=i+1;!v&&j<Math.min(lines.length,i+3)&&!sr.test(lines[j]);j++){rest+=' '+lines[j];v=rest.match(vr)}
+if(!v)return;const txt=rest.replace(vr,' ').replace(/\s+/g,' ').trim(),d=pd(m[1]);if(!d)return;
+const mt=gm(txt),method=mt==='Outro'?'Outro':mt,brand=gb(txt);
+out.push({date:d,hora:m[2],amount:pn(v[1]),out:false,cd:null,stone:true,vend:true,method,brand,desc:('Venda cartão '+txt).slice(0,70)})});
+out.lojaHint=gl(lines.slice(0,12).join(' '));return out}
+const sumRe=/^(entradas|sa[ií]das|resumo|posi[cç][aã]o|caixa (aberto|fechado)|transf)/i,dRe=/^\d{1,2}\/\d{1,2}\/\d{2,4}/;
+if(lines.some(l=>/extrato de conta/i.test(l))||lines.some(l=>/CONTRAPARTE/.test(l))){
+const re=/^(\d{2}\/\d{2}\/\d{2,4})\s+(Entrada|Sa[ií]da)\b(.*)$/i,bad=/^(\d{2}\/|transfer|dados|per[ií]odo|data |nome|stone|inst)/i;
+const skipN=[];
+lines.forEach((t,i)=>{const m=t.match(re);if(!m)return;const d=pd(m[1]),RV=/-?\s?R\$\s?-?\d+(?:\.\d{3})*,\d{2}/;let mv=m[3].match(RV),ext='';if(!d)return;
+const wi=[];for(let j=i+1;j<Math.min(lines.length,i+5)&&!re.test(lines[j]);j++)wi.push(lines[j]);
+if(!mv){/* valor caiu em outra linha do PDF: procura nas vizinhas */const cand=[...wi,lines[i-1]||''];for(const c of cand){const q=c.match(RV);if(q&&!/^\d{2}\/\d{2}\/\d{2,4}\s+(Entrada|Sa)/i.test(c)){mv=q;ext=c;break}}}
+if(!mv){skipN.push(t);return}
+const nx=wi.join(' '),pv=lines[i-1]||'',mid=(ext?m[3]:m[3].slice(0,m[3].indexOf(mv[0]))).trim();
+out.push({date:d,amount:Math.abs(pn(mv[0])),out:/^sa/i.test(m[2]),cd:null,stone:true,...(EST.test(t+' '+nx+' '+(bad.test(pv)?'':pv))?{apag:true,est:true}:{}),method:gm(nx+' '+m[3]),brand:gb(nx+' '+m[3]),desc:[bad.test(pv)?'':pv,mid,EST.test(nx)?'Estorno':''].filter(Boolean).join(' ').replace(/\s+/g,' ').slice(0,70)})});
+out.skipped=skipN;return out}
+const ss=lines.some(l=>/hist[oó]rico/i.test(l))&&lines.some(l=>/categoria|usu[aá]rio/i.test(l));
+if(ss){let rec=null,skip=false;const fl=()=>{if(rec){const x=parseRec(rec);if(x)out.push(x)}rec=null};
+for(const t of lines){if(sumRe.test(t)||/^(saldo\s*final|ip[êe] digital|movimenta[cç][aã]o de caixa)/i.test(t)){fl();skip=true;continue}
+if(dRe.test(t)){skip=false;fl();rec=t;continue}
+if(skip)continue;if(rec)rec+=' '+t}
+fl();return out}
+let cur=null,skip=false;
+lines.forEach(txt=>{if(sumRe.test(txt)){skip=true;return}
+if(skip){if(dRe.test(txt))skip=false;else return}
+const d=pd(txt);if(d)cur=d;
+const m=txt.match(/-?\s?\(?(?:R\$)?\s?-?\d{1,3}(?:\.\d{3})*,\d{2}\)?-?/);
+if(m&&cur&&!/saldo\s*(inicial|final|anterior)/i.test(txt))out.push({date:cur,amount:pn(m[0]),desc:txt.replace(m[0],'').replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/,'').trim().slice(0,80),method:gm(txt),brand:gb(txt),out:/sa[ií]da|despesa|pagamento de|pix enviado|enviada/i.test(txt)||/\d,\d{2}\s*D\b/.test(txt),cd:(txt.match(/\d,\d{2}\s*([CD])\b/)||[])[1]||null,...(EST.test(txt)?{apag:true,est:true}:{})})});
+return out}
+
+/* relatório de saídas do Ssotica com colunas em páginas separadas (Conta/Dia/Categoria e Descrição/Forma/Entrada-Saída/Valor) */
+function splitReport(pgs){
+const money=/^-?\s*R\$\s*-?\s*(\d+(?:\.\d{3})*,\d{2})$/,tipoRe=/^(Sa[ií]da|Entrada)\b/i,dateRe=/(\d{2}\/\d{2}\/\d{4})/;
+const hasL=pgs.some(p=>p.some(i=>/^Categoria$/i.test(i.s.trim()))),hasR=pgs.some(p=>p.some(i=>/^Forma de pagamento$/i.test(i.s.trim())));
+if(!hasL||!hasR)return null;
+const hd=(re)=>{for(const p of pgs)for(const i of p)if(re.test(i.s.trim()))return i.x;return null};
+const xDia=hd(/^Dia$/i),xCat=hd(/^Categoria$/i),xForma=hd(/^Forma de pagamento$/i),xTipo=hd(/^Entrada\/Sa[ií]da$/i),xVal=hd(/^Valor/i);
+if(xDia==null||xCat==null||xForma==null||xTipo==null||xVal==null)return null;
+const left=[],right=[];
+for(const p of pgs){const isR=p.some(i=>i.x>=xTipo-8&&i.x<xVal-4&&tipoRe.test(i.s.trim())&&!/\//.test(i.s));
+const rows=[];
+if(isR){const an=p.filter(i=>i.x>=xTipo-8&&i.x<xVal-4&&tipoRe.test(i.s.trim())&&!/\//.test(i.s)).sort((a,b)=>b.y-a.y);
+an.forEach(a=>rows.push({y:a.y,tipo:a.s.trim(),desc:[],val:null}));
+p.forEach(i=>{if(i.x>=xTipo-8&&i.x<xVal-4&&tipoRe.test(i.s.trim())&&!/\//.test(i.s))return;if(/^Descri[cç][aã]o$|^Forma de pagamento$|^Entrada\/|^Valor/i.test(i.s.trim()))return;
+let b=null,bd=1e9;rows.forEach(r=>{const d=Math.abs(r.y-i.y);if(d<bd){bd=d;b=r}});if(!b||bd>12)return;
+if(i.x>=xVal-6&&money.test(i.s.trim())){b.val=i.s.trim()}else if(i.x<xForma-2){b.desc.push(i)}});
+rows.forEach(r=>{r.desc=r.desc.sort((a,b)=>b.y-a.y||a.x-b.x).map(i=>i.s.trim()).join(' ').replace(/\s+/g,' ').trim();right.push(r)})}
+else{const an=p.filter(i=>i.x<xDia-8&&!/^Conta$/i.test(i.s.trim())).sort((a,b)=>b.y-a.y);
+an.forEach(a=>rows.push({y:a.y,conta:a.s.trim(),date:null,cat:[]}));
+p.forEach(i=>{if(i.x<xDia-8)return;if(/^(Dia|Categoria)$/i.test(i.s.trim()))return;let b=null,bd=1e9;rows.forEach(r=>{const d=Math.abs(r.y-i.y);if(d<bd){bd=d;b=r}});if(!b||bd>9)return;
+if(i.x<xCat-4){const m=i.s.match(dateRe);if(m)b.date=m[1]}else b.cat.push(i.s.trim())});
+rows.forEach(r=>{r.cat=r.cat.join(' ').trim();left.push(r)})}}
+const n=Math.min(left.length,right.length),out=[],skipped=[];
+for(let k=0;k<n;k++){const L=left[k],R=right[k],d=pd(L.date||''),mv=R.val&&R.val.match(money);
+if(!d||!mv){skipped.push((L.date||'?')+' '+(R.desc||'').slice(0,40));continue}
+const v=pn(mv[1]),isOut=/^sa/i.test(R.tipo),txt=(R.desc+' '+L.cat).replace(/d[ée]bito autom[aá]tico/ig,'').replace(/\s+/g,' '),mt=/pix/i.test(txt)?'Pix':/boleto/i.test(txt)?'Boleto':'Outro';
+const x={date:d,amount:v,out:isOut,cd:isOut?'D':'C',method:mt,brand:'',cat:L.cat,conta:L.conta,cli:'',desc:(R.desc+(L.cat?' · '+L.cat:'')).slice(0,120)};
+if(/estorn/i.test(R.desc+' '+L.cat)){x.apag=true;x.est=true}out.push(x)}
+if(left.length!==right.length)skipped.push('colunas com '+left.length+' linhas à esquerda e '+right.length+' à direita');
+out.skipped=skipped;return out.length?out:null}
+
+/* relatório de saídas do Ssotica em uma tabela só (Conta, Dia, [Categoria], [Descrição], Forma de pagamento, Entrada/Saída, Valor) */
+function tableReport(pgs){
+const money=/^-?\s*R\$\s*-?\s*(\d+(?:\.\d{3})*,\d{2})$/,tipoRe=/^(Sa[ií]da|Entrada)$/i,dateRe=/(\d{2}\/\d{2}\/\d{4})/;
+const H={};pgs.forEach(p=>p.forEach(i=>{const t=i.s.trim();if(/^Conta$/i.test(t))H.conta=i.x;else if(/^Dia$|^Data$/i.test(t))H.dia=i.x;else if(/^Categoria$/i.test(t))H.cat=i.x;else if(/^Descri[cç][aã]o$/i.test(t))H.desc=i.x;else if(/^Forma de pagamento$/i.test(t))H.forma=i.x;else if(/^Entrada\/Sa[ií]da$/i.test(t))H.tipo=i.x;else if(/^Valor/i.test(t))H.val=i.x}));
+if(H.dia==null||H.val==null||(H.tipo==null&&H.desc==null&&H.cat==null&&H.forma==null))return null;
+if(H.conta==null)H.conta=Math.max(0,H.dia-60);
+const noTipo=H.tipo==null;
+const cols=Object.entries(H).sort((a,b)=>a[1]-b[1]),colOf=x=>{let c=null;for(const [k,hx] of cols)if(x>=hx-6)c=k;return c||'conta'};
+const out=[],skipped=[];
+for(const p of pgs){const an=(noTipo?p.filter(i=>i.x>=H.dia-6&&i.x<(H.cat??H.desc??H.forma??H.val)-4&&/^\d{2}\/\d{2}\/\d{4}$/.test(i.s.trim())):p.filter(i=>tipoRe.test(i.s.trim())&&i.x>=H.tipo-8&&i.x<H.val-4)).sort((a,b)=>b.y-a.y);if(!an.length)continue;
+const rows=an.map(a=>({y:a.y,tipo:noTipo?'Saída':a.s.trim(),conta:[],dia:'',cat:[],desc:[],forma:[],val:null}));
+p.forEach(i=>{const t=i.s.trim();if(!t||(!noTipo&&tipoRe.test(t)&&i.x>=H.tipo-8&&i.x<H.val-4))return;if(/^(Conta|Dia|Data|Categoria|Descri[cç][aã]o|Forma de pagamento|Entrada\/Sa[ií]da|Valor.*)$/i.test(t))return;
+let b=null,bd=1e9;rows.forEach(r=>{const d=Math.abs(r.y-i.y);if(d<bd){bd=d;b=r}});const c=colOf(i.x);if(!b||bd>(c==='desc'||c==='cat'||c==='forma'?22:9))return;
+if(c==='val'){if(money.test(t))b.val=t}else if(c==='dia'){const m=t.match(dateRe);if(m)b.dia=m[1]}else if(Array.isArray(b[c]))b[c].push(t)});
+rows.forEach(r=>{const d=pd(r.dia),mv=r.val&&r.val.match(money);if(!d||!mv){skipped.push((r.dia||'?')+' '+(r.desc.join(' ')||'').slice(0,40));return}
+const isOut=/^sa/i.test(r.tipo),desc=r.desc.join(' ').replace(/\s+/g,' ').trim(),cat=r.cat.join(' ').trim(),forma=r.forma.join(' ').trim(),txt=(desc+' '+cat+' '+forma).replace(/d[ée]bito autom[aá]tico/ig,'');
+const mt=/tarifa/i.test(txt)?'Outro':/pix/i.test(txt)?'Pix':/boleto/i.test(txt)?'Boleto':/dinheiro/i.test(txt)?'Dinheiro':'Outro';
+const x={date:d,amount:pn(mv[1]),out:isOut,cd:isOut?'D':'C',method:mt,brand:'',cat,conta:r.conta.join(' ').trim(),cli:'',desc:(desc+(cat?' · '+cat:'')+(forma&&!desc?forma:'')).slice(0,120)};
+if(/estorn/i.test(desc+' '+cat)){x.apag=true;x.est=true}out.push(x)})}
+out.skipped=skipped;if(H.desc==null&&H.cat==null)out.note='Este arquivo não traz Descrição nem Categoria. Por isso não dá para identificar estornos nem a forma de pagamento (Pix ou boleto). Exporte o relatório do Ssotica com a coluna Descrição para o app ignorar os estornos.';
+return out.length?out:null}
+async function readPdf(f){
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise,lines=[],pgs=[];
+for(let p=1;p<=pdf.numPages;p++){const tc=await(await pdf.getPage(p)).getTextContent(),ls={};pgs.push(tc.items.filter(t=>t.str&&t.str.trim()).map(t=>({s:t.str,x:Math.round(t.transform[4]),y:Math.round(t.transform[5])})));
+tc.items.forEach(t=>{const y=Math.round(t.transform[5]/3);(ls[y]=ls[y]||[]).push(t)});
+Object.keys(ls).sort((a,b)=>b-a).forEach(k=>{const txt=ls[k].sort((a,b)=>a.transform[4]-b.transform[4]).map(t=>t.str).join(' ').replace(/\s+/g,' ').trim();if(txt)lines.push(txt)})}
+const spr=splitReport(pgs)||tableReport(pgs);if(spr){spr.lojaHint=gl(lines.slice(0,12).join(' '));return spr}
+const mum=lines.some(l=>/Pagamento recebido:/i.test(l))&&lines.some(l=>/mumbuca/i.test(l)),cx=lines.some(l=>/movimenta[cç][aã]o d[oe] caixa/i.test(l))&&lines.some(l=>/hist[oó]rico/i.test(l)),td=(mum||cx||lines.some(l=>/data da venda/i.test(l)&&/bandeira/i.test(l)))?null:parseTotDoc(lines,false);if(td)return td;
+let res=parseLines(lines);res.lojaHint=gl(lines.slice(0,12).join(' '));return res}
+async function readImg(f){
+const sm=typeof claude!=='undefined'?await claude.use('sample').catch(()=>null):null;if(!sm)throw 0;
+const y=new Date().getFullYear();
+const r=await sm.json(`A imagem anexa é uma foto ou print de um relatório financeiro de uma loja. O caso mais comum é a "MOVIMENTAÇÃO DO CAIXA" do sistema Ssotica, uma tabela com as colunas: Data (data e hora em duas linhas), Usuário (ex.: Vendas.art), Categoria (pode quebrar em duas linhas, ex.: "Recebimento Crediário", "Vendas", "Adiantamento Ordem Serviço"), Histórico (nome do cliente; número da venda ou da OS; às vezes "Parcela 2 de 7"; um ícone com a palavra Banco ou Caixa; e uma etiqueta cinza com a forma de pagamento, por exemplo "Pix", "Crédito Master", "Débito Elo", "Dinheiro") e Valor (azul com a letra C para entrada, vermelho com D para saída). Também pode ser um extrato bancário da Stone. EXCEÇÃO: se a imagem for o quadro "Total no Período" (um título "Recebido" com o valor total e uma lista de formas de pagamento com valores, por exemplo Crédito Master, Crédito Visa, Pix, Débito Master, Dinheiro, sem datas por linha), responda um OBJETO {"tipo":"resumo","resumo":[{"forma":"nome exato da forma","amount":número}],"total":número do Recebido,"dias":[{"data":"AAAA-MM-DD","total":número do Recebido do dia,"resumo":[{"forma":"nome exato","amount":número}]}]}. "resumo" e "total" são só do bloco inicial Total no Período; cada bloco "Dia dd/mm/aaaa" vira um item de "dias" (use [] se não houver blocos de dia). Não repita os valores dos dias no bloco inicial. O quadro tem DUAS colunas lado a lado: a da esquerda (Recebido e as formas de pagamento) e a da direita ("Vendas Crediário" com "Carnê"). IGNORE por completo a coluna da direita, que não são recebimentos, e nunca some o valor do Carnê nem de Vendas Crediário a nenhuma forma de pagamento (ex.: Crédito Master é só o valor da linha dele). Responda só isso. Caso contrário, extraia SOMENTE as linhas de lançamentos individuais da tabela. IGNORE a linha SALDO INICIAL e SALDO FINAL, a coluna Saldo e qualquer bloco de resumo ou total (Entradas, Saídas, Resumo, Posição atual/final, Transf. autom. para Banco, Caixa aberto/fechado, Resumo por formas de pagamento). Se só houver resumos de caixa (e não o quadro Total no Período), responda {"tipo":"lancamentos","lancamentos":[]}. Nos demais casos responda somente com JSON, sem texto extra, no formato {"tipo":"lancamentos","lancamentos":[itens]}, com um item por lançamento, assim: {"date":"AAAA-MM-DD" (a data na imagem é dia/mês/ano),"hora":"HH:MM" ou "","usr":"usuário","cat":"categoria completa","cli":"nome do cliente","os":"número da venda/OS, só dígitos, ou \"\"","parc":"2/7" quando houver Parcela 2 de 7, senão \"\"","dest":"Banco" ou "Caixa" ou "","method":"Pix"|"Débito"|"Crédito"|"Dinheiro"|"Mumbuca"|"Outro" (pela etiqueta cinza; Cartão Mumbuca = Mumbuca),"brand":"Mastercard"|"Visa"|"Elo"|"American Express" ou "" (Master = Mastercard; Amex = American Express),"cd":"C" ou "D" (a letra ao lado do valor) ou "","apagada":true se junto da linha houver "Informações sobre a exclusão" ou "Venda apagada" (senão false),"amount":número positivo da coluna Valor (nunca o Saldo)}. Se a data não tiver o ano, use ${y}. Não invente linhas nem campos: deixe "" quando não aparecer.`,{images:[f]});
+if(r&&!Array.isArray(r)&&Array.isArray(r.resumo)){const it=r.resumo.map(x=>({label:String(x.forma||'').slice(0,60),method:gm(String(x.forma||'')),brand:gb(String(x.forma||'')),amount:pn(x.amount??'')})).filter(x=>x.label&&!isNaN(x.amount)&&!/^(vendas\s+credi|credi[aá]rio|carn[eê])/i.test(x.label));it.tot=true;it.total=pn(r.total??'')||0;it.days=(Array.isArray(r.dias)?r.dias:[]).map(d=>({date:pd(String(d.data||'')),total:pn(d.total??'')||0,items:(Array.isArray(d.resumo)?d.resumo:[]).map(x=>({label:String(x.forma||'').slice(0,60),method:gm(String(x.forma||'')),brand:gb(String(x.forma||'')),amount:pn(x.amount??'')})).filter(x=>x.label&&!isNaN(x.amount)&&!/^(vendas\s+credi|credi[aá]rio|carn[eê])/i.test(x.label))})).filter(d=>d.date&&d.items.length);return it}
+const a=Array.isArray(r)?r:(r&&(r.items||r.lancamentos))||[];
+return a.map(x=>{const v=pn(x.amount??''),cd=x.cd==='C'||x.cd==='D'?x.cd:null,o=cd?cd==='D':!!x.out;
+const it={date:pd(String(x.date||'')),amount:o&&v>0?-v:v,cd,out:o,method:['Pix','Boleto','Débito','Crédito','Dinheiro','Mumbuca'].includes(x.method)?x.method:gm(String(x.method||'')),brand:BR.includes(x.brand)?x.brand:'',cli:String(x.cli||'').slice(0,60),os:String(x.os||'').replace(/\D/g,''),cat:String(x.cat||'').slice(0,40),parc:String(x.parc||'').slice(0,8),hora:/^\d{2}:\d{2}$/.test(x.hora||'')?x.hora:'',usr:String(x.usr||'').slice(0,30),dest:/banco/i.test(x.dest||'')?'Banco':/caixa/i.test(x.dest||'')?'Caixa':''};
+it.desc=mkDesc(it).slice(0,100);if(x.apagada===true)it.apag=true;if(/estorn/i.test(JSON.stringify(x))){it.apag=true;it.est=true}return it}).filter(x=>x.date&&!isNaN(x.amount))}
+
+/* ---------- importar ---------- */
+const isImg=n=>/\.(jpe?g|png|webp)$/i.test(n);
+function fileCheck(){const m=sel.slice(0,7),mm=e=>e.date.startsWith(m)&&inL(e),rg=l=>{const d=l.map(e=>e.date).sort();return d.length?fd(d[0]).slice(0,5)+' a '+fd(d[d.length-1]).slice(0,5):''};
+const I=[['Extrato da conta Stone (Pix recebidos e saídas)',D.filter(e=>mm(e)&&e.source==='Stone'&&!e.vend&&!e.manual)],['Vendas no cartão da Stone',D.filter(e=>mm(e)&&e.vend)],['Caixa do Ssotica (Movimentação do caixa)',D.filter(e=>mm(e)&&e.source==='Ssotica'&&e.type==='in'&&!e.agg&&!e.manual)],['Contas pagas / saídas',D.filter(e=>mm(e)&&e.type==='out'&&!e.manual)]],tt=T.filter(t=>t.month===m&&(!LF||t.loja===LF));
+const row=(n,a)=>`<div class="ck"><span class="ic ${a.length?'y':'n'}">${a.length?'✓':'!'}</span><span>${n}<br><span class="mu">${a.length?a.length+' lançamentos · '+rg(a):'ainda não carregado'}</span></span><span></span></div>`;
+const rt=`<div class="ck"><span class="ic ${tt.length?'y':'n'}">${tt.length?'✓':'!'}</span><span>Total no Período (Ssotica)<br><span class="mu">${tt.length?tt.length+' formas de pagamento':'ainda não carregado'}</span></span><span></span></div>`;
+return `<section class="cd"><h2>Arquivos de ${mname(m)}</h2>${I.map(([n,a])=>row(n,a)).join('')}${rt}</section>`}
+function importBox(kind,titulo,dica){return `<section class="cd"><h2>Importar ${titulo}</h2><span class="mu">${dica} Ao importar de novo o mesmo período, o arquivo antigo é substituído.</span>
+<div class="dz"><strong>PDF, Excel, CSV ou foto (JPG/PNG)</strong><br><br><input type="file" id="fi" multiple accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp" onchange="loadFiles(this.files,false,'${kind}')" aria-label="Escolher arquivos de ${titulo}"></div><div id="pv"></div></section>`}
+function calGen(tit,fl,isA,pend){const p=per(),[Y,M]=p.m.split('-').map(Number),nd=new Date(Y,M,0).getDate(),fw=new Date(Y,M-1,1).getDay(),dd={};
+ins().filter(e=>e.date.startsWith(p.m)&&fl(e)).forEach(e=>{const o=dd[e.date]=dd[e.date]||{a:0,b:0};if(isA(e))o.a+=e.amount;else o.b+=e.amount});
+let h=['D','S','T','Q','Q','S','S'].map(x=>`<div class="h">${x}</div>`).join('')+Array(fw).fill('<i></i>').join(''),ok=0,bd=0,pd3=0;
+for(let d=1;d<=nd;d++){const k=p.m+'-'+pad(d),o=dd[k],df=o?o.a-o.b:0,cl=!o?'':z(df)?'ok':(pend&&o.a===0&&o.b>0)?'pend':'bad';if(cl==='ok')ok++;if(cl==='bad')bd++;if(cl==='pend')pd3++;
+h+=`<button class="${cl}${fp==='dia'&&sel===k?' on':''}" aria-label="Dia ${d}" onclick="fp='dia';sel='${k}';render()"><span>${d}</span><small>${!o?'':z(df)?'✓':cl==='pend'?'⏳':(df>0?'+':'−')+Math.round(Math.abs(df))}</small></button>`}
+return `<section class="cd"><div class="fh"><h2>Calendário de ${tit} · ${mname(p.m)}</h2><span class="mu"><b class="ok">${ok} certos</b> · <b class="bad">${bd} com diferença</b>${pd3?` · <b class="wn">${pd3} aguardando cartão da Stone</b>`:''}</span></div><div class="cal">${h}</div><span class="mu">${pend?'Amarelo ⏳: venda no Ssotica e ainda sem cartão na Stone. ':''}Verde: o valor da conta e do Ssotica é igual no dia. Vermelho: diferença do dia em reais (+ entrou a mais na conta, − lançado a mais no Ssotica). Toque em um dia para ver só ele.</span></section>`}
+function lancs(fl,srcs,dm,ds){const p=per(),l=D.filter(e=>e.type==='in'&&inL(e)&&!isEst(e)&&p.pf(e)&&fl(e)).sort((a,b)=>b.date.localeCompare(a.date)||(b.hora||'').localeCompare(a.hora||'')),ls=l.filter(e=>!srcF||e.source===srcF),col={Stone:'var(--ok)',Ssotica:'#2f62d6',Mumbuca:'#c26a12'};
+return formManual('in',dm,ds)+`<section class="cd"><h2>Lançamentos (${ls.length})</h2><div class="lg">${srcs.filter(o=>!srcF||srcF===o).map(o=>`<button class="lgb${srcF===o?' on':''}" onclick="srcF=srcF==='${o}'?'':'${o}';render()" aria-pressed="${srcF===o}"><i style="background:${col[o]}"></i>${o}${srcF===o?' ✕':''}</button>`).join('')}</div>${ls.slice(0,100).map(e=>`<details class="dt"><summary class="li ${e.canc?'cn':isCM(e)?'fy':e.source==='Stone'?'fs':e.source==='Mumbuca'?'fm':'fz'}"><span>${e.canc?'<span class="chip n">Cancelado</span> ':''}${fd(e.date)}${e.hora?' '+esc(e.hora):''} · ${esc(ljName(e.loja))} · ${esc(e.source)} · ${esc(lbl(e))}<br><span class="mu">${esc(e.desc||e.cli||'')}</span></span><span class="mono"><b>${fn(e.amount)}</b> ›</span></summary>${detBody(e)}</details>`).join('')||'<span class="mu">Nenhum lançamento neste período.</span>'}${ls.length>100?`<span class="mu">Mostrando 100 de ${ls.length}. Use o seletor de dia para ver os outros.</span>`:''}</section>`}
+function pixTab(){const p=per(),c=calc(p.pf);return pbar()+calGen('Pix',e=>e.method==='Pix',e=>e.source==='Stone')+forma('Pix',c)+revisar(p.pf)+pixDet(p.pf)+cmCard()+lancs(e=>e.method==='Pix',['Stone','Ssotica'],'Pix','Stone')+importBox('pix','Pix','Extrato da conta Stone (entradas de Pix) e Movimentação do caixa do Ssotica.')}
+function carTab(){const p=per(),c=calc(p.pf);return pbar()+calGen('Cartões',e=>isCard(e.method),e=>e.source==='Stone',true)+forma('Crédito',c)+forma('Débito',c)+(fp==='mes'?totSec():'')+revisar(p.pf)+lancs(e=>isCard(e.method),['Stone','Ssotica'],'Crédito','Stone')+importBox('car','Cartões','Relatório de vendas no cartão da Stone, Movimentação do caixa e o quadro Total no Período do Ssotica.')}
+function entTab(){return lista('in')}
+function mumTab(){const p=per(),c=calc(p.pf);return pbar()+calGen('Mumbuca',e=>e.method==='Mumbuca',e=>e.source==='Mumbuca')+mumbucaCard(c)+lancs(e=>e.method==='Mumbuca',['Mumbuca','Ssotica'],'Mumbuca','Mumbuca')+importBox('mum','Mumbuca','Extrato da conta Mumbuca (só entram as linhas Pagamento recebido) e a Movimentação do caixa do Ssotica.')}
+function impTab(){return fileCheck()+`<section class="cd"><h2>Carregar arquivos</h2>
+<div class="steps"><span><b>1</b> Escolha os arquivos</span><span><b>2</b> Confira a origem e a loja</span><span><b>3</b> Importe e veja no Painel</span></div>
+<div class="dz"><strong>Excel, CSV, PDF ou foto (JPG/PNG)</strong><span class="mu">Pode escolher o arquivo da Stone e o do Ssotica de uma vez.</span><br><br><input type="file" id="fi" multiple accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp" onchange="loadFiles(this.files)" aria-label="Escolher arquivos"></div>
+<span class="mu">No caixa do Ssotica reconheço o valor com C (entrada) e D (saída) e ignoro o saldo e os blocos de resumo. Só entram os pagamentos da lista.</span></section>
+<div id="pv"></div>${dadosCard()}${backup()}`}
+let impOut=false;
+async function loadFiles(fl,out,kind){impOut=!!out;files=[];if(!fl||!fl.length)return;$('#pv').innerHTML='<section class="cd mu">Lendo arquivos...</section>';
+for(const f of fl){const n=files.length,g=/ssotica|sistema/i.test(f.name)?'Ssotica':/stone|banco|extrato/i.test(f.name)?'Stone':(n%2?'Ssotica':'Stone'),o={name:f.name,items:[],src:kind==='mum'?'Mumbuca':g,loja:gl(f.name)||LF,mode:out?'out':'in',onlyOut:!!out,skip:new Set()};
+try{if(isImg(f.name)){$('#pv').innerHTML='<section class="cd mu">Lendo a foto '+esc(f.name)+'...</section>';o.items=await readImg(f)}
+else if(/\.pdf$/i.test(f.name))o.items=await readPdf(f);
+else{const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});const rw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''});const rl=rw.map(r=>{const cells=r.map(c=>c instanceof Date?'':c),l0=cells.find(c=>typeof c==='string'&&c.trim());if(l0&&/total no per[ií]odo|^dia\s+\d/i.test(l0.trim()))return l0.trim();const out=[];let lab=null;for(const c of cells){const mny=typeof c==='number'||(typeof c==='string'&&/^\s*(R\$)?\s*-?\d[\d.]*,\d{2}\s*$/.test(c));if(mny){if(lab){out.push(lab+' R$ '+(typeof c==='number'?c.toFixed(2).replace('.',','):c.replace(/[^\d.,]/g,'')));lab=null}}else if(typeof c==='string'&&c.trim())lab=c.trim()}return out.join(' ')}),td=parseTotDoc(rl,true);
+o.items=td||fromRows(rw)}
+o.skipped=o.items.skipped||[];o.note=o.items.note||'';if(!o.items.tot&&o.items.some(x=>x.apag)){const lh=o.items.lojaHint;o.ign=o.items.filter(x=>x.apag);o.items=o.items.filter(x=>!x.apag);o.items.lojaHint=lh}
+if(o.items.tot){o.tot=true;o.total=o.items.total;o.month=(o.items.days&&o.items.days[0]?o.items.days[0].date:sel).slice(0,7)}else{if(o.items.some(x=>x.cd||x.stone))o.mode='both';if(out&&o.items.some(x=>x.mumb))o.mode='in';if(o.items.some(x=>x.cd||x.cat))o.src='Ssotica';if(o.items.some(x=>x.stone))o.src='Stone';if(o.items.some(x=>x.mumb)){o.src='Mumbuca';o.mode='in'}if(!o.loja&&o.items.lojaHint)o.loja=o.items.lojaHint}}catch(e){o.err=isImg(f.name)?'Não consegui ler a foto. Permita o uso do Claude quando perguntado ou tente uma foto mais nítida.':'Não consegui ler este arquivo.'}
+files.push(o)}
+showPv()}
+function fItems(f){if(f.tot)return[];const hc=f.items.some(x=>x.cd),r=[];f.items.forEach((x,i)=>{if(f.skip.has(i)||(hc&&!x.cd))return;const o=x.cd?x.cd==='D':(f.mode==='both'?(x.out||x.amount<0):f.mode==='out');if(f.mode==='in'&&o)return;if(f.mode==='out'&&!o)return;if(f.onlyOut&&!o)return;const a=Math.abs(x.amount);if(a>0)r.push({i,date:x.date,type:o?'out':'in',source:f.src,loja:f.loja||'',method:x.method,brand:x.brand||'',amount:a,desc:x.desc,cat:x.cat||'',hora:x.hora||'',cli:x.cli||'',os:x.os||'',parc:x.parc||'',dest:x.dest||'',...(x.conta?{conta:x.conta}:{}),...(x.vend?{vend:true}:{})})});return r}
+function totCard(f,fi){const sm=f.items.reduce((t,x)=>t+x.amount,0),ds=f.items.days||[],sd=ds.reduce((t,d)=>t+d.items.reduce((a,x)=>a+x.amount,0),0);
+return `<section class="cd"><div class="fh"><h2 style="overflow-wrap:anywhere">${esc(f.name)}</h2><span class="chip ok">Total no período</span></div>
+<span class="mu">Relatório do Ssotica com o total do período${ds.length?' e '+ds.length+' dias':''}. O total do período fica separado e os dias entram como resumo do dia. Nada é somado duas vezes.</span>
+<div class="g"><div><label for="tm${fi}">Mês do total</label><input type="month" id="tm${fi}" value="${f.month}" onchange="if(this.value)files[${fi}].month=this.value"></div>
+<div><label for="tlj${fi}">Loja</label><select id="tlj${fi}" onchange="files[${fi}].loja=this.value;showPv()"><option value="">Escolha a loja</option>${LJ.map(k=>`<option ${k===f.loja?'selected':''}>${k}</option>`).join('')}</select></div></div>
+<div class="mu">Total no período</div>${f.items.map(x=>`<div class="li"><span>${esc(x.label)}</span><span class="mono">${fn(x.amount)}</span></div>`).join('')||'<span class="mu">Sem bloco de total do período neste arquivo.</span>'}
+${f.items.length?`<div class="li"><b>Soma das formas</b><span class="mono"><b>${fn(sm)}</b></span></div>`:''}${f.total&&!z(f.total-sm)?`<span class="bad">O Recebido do relatório (${fm(f.total)}) é diferente da soma das formas (${fm(sm)}). Confira a leitura.</span>`:''}
+${ds.length?`<details><summary>${ds.length} dias do relatório · soma ${fm(sd)}</summary>${ds.map(d=>{const v=d.items.reduce((a,x)=>a+x.amount,0);return `<div class="li"><span>${fd(d.date)}<br><span class="mu">${d.items.map(x=>esc(x.label)+' '+fn(x.amount)).join(' · ')}</span></span><span class="mono ${d.total&&!z(d.total-v)?'bad':''}">${fn(v)}</span></div>`}).join('')}</details>${f.items.length&&!z(sd-sm)?`<span class="bad">A soma dos dias (${fm(sd)}) é diferente do total do período (${fm(sm)}). Falta algum dia no relatório ou há valor diferente.</span>`:'<span class="ok">A soma dos dias bate com o total do período.</span>'}`:''}</section>`}
+function showPv(){let tot=0;
+const h=files.map((f,fi)=>{if(f.tot){tot+=f.items.length+(f.items.days||[]).reduce((a,d)=>a+d.items.length,0);return totCard(f,fi)}const it=fItems(f);tot+=it.length;const si=it.filter(x=>x.type==='in').reduce((t,x)=>t+x.amount,0),so=it.filter(x=>x.type==='out').reduce((t,x)=>t+x.amount,0);
+return `<section class="cd"><div class="fh"><h2 style="overflow-wrap:anywhere">${esc(f.name)}</h2><span class="chip ${f.err||!it.length?'bad':'ok'}">${f.err?'Erro':it.length+' lançamentos'}</span></div>
+${f.err?`<span class="bad">${f.err}</span>`:''}
+<div class="g"><div><label for="fo${fi}">Origem</label><select id="fo${fi}" onchange="files[${fi}].src=this.value;showPv()">${['Stone','Ssotica','Mumbuca'].map(s=>`<option ${s===f.src?'selected':''}>${s}</option>`).join('')}</select></div>
+<div><label for="fl${fi}">Loja</label><select id="fl${fi}" onchange="files[${fi}].loja=this.value;showPv()"><option value="">Escolha a loja</option>${LJ.map(k=>`<option ${k===f.loja?'selected':''}>${k}</option>`).join('')}</select></div>
+<div><label for="fm${fi}">O arquivo contém</label><select id="fm${fi}" onchange="files[${fi}].mode=this.value;showPv()">${[['in','Entradas'],['out','Despesas'],['both','Entradas e despesas (pelo C/D ou sinal)']].map(o=>`<option value="${o[0]}" ${o[0]===f.mode?'selected':''}>${o[1]}</option>`).join('')}</select></div></div>
+${f.note?`<div class="stt wn">${esc(f.note)}</div>`:''}${f.skipped&&f.skipped.length?`<div class="stt wn">${f.skipped.length} linha(s) do extrato com data e valor não lidas: ${f.skipped.map(esc).join(' · ')}. Lance à mão em Entradas.</div>`:''}
+${f.ign&&f.ign.filter(x=>!x.est).length?`<div class="stt wn">${f.ign.filter(x=>!x.est).length} lançamento(s) ignorado(s) porque estão como "Venda apagada": ${f.ign.filter(x=>!x.est).map(x=>fd(x.date)+' '+fn(Math.abs(x.amount))).join(' · ')}</div>`:''}${f.ign&&f.ign.filter(x=>x.est).length?`<div class="stt wn">${f.ign.filter(x=>x.est).length} estorno(s) ignorado(s), não entram no relatório: ${f.ign.filter(x=>x.est).map(x=>fd(x.date)+' '+fn(Math.abs(x.amount))).join(' · ')}</div>`:''}
+${!f.err&&!it.length?'<span class="bad">Nenhum lançamento com data e valor. Confira o tipo do arquivo ou lance manualmente.</span>':''}
+${it.length?`<span class="mu">Entradas ${fm(si)}${so?' · Despesas '+fm(so):''}</span><details><summary>Conferir lançamentos (remova o que não deve entrar)</summary>${it.slice(0,200).map(x=>`<div class="li"><span>${fd(x.date)} · ${esc(x.method)}${x.brand?' '+esc(short(x.brand)):''} · ${x.type==='in'?'entrada':'despesa'}<br><span class="mu">${esc(x.desc)}</span></span><span class="mono">${fn(x.amount)} <button class="x" aria-label="Remover" onclick="files[${fi}].skip.add(${x.i});showPv()">✕</button></span></div>`).join('')}</details>`:''}</section>`}).join('');
+$('#pv').innerHTML=h+(tot?`<button class="b" onclick="imp()">Importar ${tot} ${files.every(f=>f.tot)?'formas de pagamento':'lançamentos'}</button><span class="mu">PDF e foto são lidos de forma aproximada. Confira os valores no Painel depois.</span>`:'')}
+function imp(){if(files.some(f=>(f.tot?f.items.length+(f.items.days||[]).length:fItems(f).length)&&!f.loja)){msg('Escolha a loja de cada arquivo antes de importar.');return}
+let nt=0;files.filter(f=>f.tot).forEach(f=>{T=T.filter(t=>!(t.month===f.month&&t.loja===f.loja));f.items.forEach(x=>{T.push({id:Date.now()+''+Math.random().toString(36).slice(2,8),month:f.month,loja:f.loja,source:'Ssotica',label:x.label,method:x.method,brand:x.brand,amount:x.amount});nt++});(f.items.days||[]).forEach(d=>{D=D.filter(e=>!(e.agg&&e.source==='Ssotica'&&e.date===d.date&&e.loja===f.loja));d.items.forEach(x=>{D.push({id:Date.now()+''+Math.random().toString(36).slice(2,8),date:d.date,type:'in',source:'Ssotica',loja:f.loja,method:x.method,brand:x.brand,amount:x.amount,cat:'Resumo do dia',desc:'Resumo do dia · '+x.label,agg:true});nt++})});sel=f.month+'-01';fp='mes'});if(nt){saveT();save()}
+const mk=()=>Date.now()+''+Math.random().toString(36).slice(2,8);let n=0,rm=0,sk=0,first=null;
+const k=e=>[e.date,e.hora||'',e.loja||'',e.source,e.type,(+e.amount).toFixed(2),e.desc||''].join('|'),canc=new Set(D.filter(e=>e.canc).map(k));
+files.filter(f=>!f.tot).forEach(f=>{const it=fItems(f);if(!it.length)return;const ds=new Set(it.map(x=>x.date)),ty=new Set(it.map(x=>x.type)),lj=f.loja||'',isV=it.some(x=>x.vend);
+const before=D.length;D=D.filter(e=>!(e.source===f.src&&((e.loja||'')===lj||!e.loja)&&ds.has(e.date)&&!!e.vend===isV&&!e.agg&&!e.adj&&!e.canc&&!e.manual&&ty.has(e.type)));rm+=before-D.length;
+it.forEach(x=>{const e={...x,id:mk()};delete e.i;if(canc.has(k(e))){sk++;return}D.push(e);n++;if(!first)first=e.date})});
+if(first){sel=first;fp='mes'}save();files=[];tab=impOut?'out':(['ent','mum','pix','car'].includes(tab)?tab:'painel');impOut=false;render();
+msg((nt?'Total do período importado ('+nt+' formas). ':'')+(n||!nt?n+' lançamentos importados':'')+(rm?' ('+rm+' antigos dos mesmos dias foram substituídos)':'')+'.'+(sk?' '+sk+' cancelados por você foram mantidos fora.':''))}
+
+let wipe=null;
+function wAsk(k){wipe=k;render()}
+function wNo(){wipe=null;render()}
+function mesSel(){const m=sel.slice(0,7);return{m,d:D.filter(e=>e.date.startsWith(m)&&inL(e)),t:T.filter(t=>t.month===m&&(!LF||t.loja===LF)),c:Object.keys(C).filter(k=>k.startsWith(m+'|')&&(!LF||k.split('|')[1]===LF))}}
+function rmEst(){const n=D.filter(isEst).length;D=D.filter(e=>!isEst(e));save();render();msg(n+' estorno(s) removido(s).')}
+function estCard(){const l=D.filter(isEst);if(!l.length)return '';return `<section class="cd"><div class="stt wn">${l.length} lançamento(s) já guardado(s) estão como estorno (${fm(l.reduce((t,e)=>t+Math.abs(e.amount),0))}).</div><button class="b" onclick="rmEst()">Remover os estornos guardados</button><span class="mu">Os próximos arquivos já ignoram estornos na leitura.</span></section>`}
+function mesCard(){const x=mesSel(),n=x.d.length+x.t.length+x.c.length,esc_=LF?ljName(LF):'todas as lojas';
+if(!n)return `<details class="cd"><summary>Apagar o mês</summary><span class="mu">Não há nada guardado em ${mname(x.m)} (${esc(esc_)}).</span></details>`;
+return `<details class="cd" ${wipe==='M'?'open':''}><summary>Apagar o mês todo</summary><span class="mu">Apaga os lançamentos, o total do período e os saldos do caixa de <b>${mname(x.m)}</b> (${esc(esc_)}). Para trocar o mês, use o seletor do Painel. Os outros meses não são mexidos.</span>
+<div class="li"><span>Lançamentos<br><span class="mu">Stone, Ssotica, Mumbuca, entradas e despesas</span></span><span class="mono">${x.d.length}</span></div><div class="li"><span>Total do período (Ssotica)</span><span class="mono">${x.t.length}</span></div><div class="li"><span>Saldos do caixa em dinheiro</span><span class="mono">${x.c.length}</span></div>
+${wipe==='M'?`<div class="stt bad">Apagar tudo de ${mname(x.m)}? Não dá para desfazer.</div><div class="g"><button class="b" onclick="wGo()">Sim, apagar o mês</button><button class="s" onclick="wNo()">Cancelar</button></div>`:`${DL?'<button class="s" onclick="bkp()">Baixar backup antes (.json)</button>':''}<button class="s" onclick="wAsk('M')">Apagar ${mname(x.m)}</button>`}</details>`}
+function outSel(all){const m=sel.slice(0,7);return D.filter(e=>e.type==='out'&&inL(e)&&(all||e.date.startsWith(m)))}
+function outCard(){const a=outSel(false),b=outSel(true),m=mname(sel.slice(0,7)),esc_=LF?ljName(LF):'todas as lojas';
+const ask=(k,n,txt)=>wipe===k?`<div class="stt bad">Apagar ${n} lançamento(s) de ${txt}? Não dá para desfazer. As entradas não são mexidas.</div><div class="g"><button class="b" onclick="wGo()">Sim, apagar</button><button class="s" onclick="wNo()">Cancelar</button></div>`:(n?`<button class="s" onclick="wAsk('${k}')">Apagar ${txt}</button>`:'');
+return `<details class="cd" ${wipe==='OM'||wipe==='OA'?'open':''}><summary>Apagar contas pagas</summary><span class="mu">Apaga só as despesas (${esc(esc_)}). Entradas, totais do período e saldos do caixa ficam como estão.</span>
+<div class="li"><span>${m}</span><span class="mono">${a.length}</span></div><div class="li"><span>Todos os meses</span><span class="mono">${b.length}</span></div>
+${a.length||b.length?'':'<span class="mu">Não há contas pagas guardadas.</span>'}${ask('OM',a.length,'contas pagas de '+m)}${ask('OA',b.length,'todas as contas pagas')}</details>`}
+function wGo(){const k=wipe;wipe=null;
+if(k==='CM'){const x=D.filter(e=>isCM(e)&&inL(e)),ids=new Set(x.map(e=>e.id));D=D.filter(e=>!ids.has(e.id));save();render();msg(x.length+' Pix de CENTRO MARICÁ apagados.');return}
+if(k==='OM'||k==='OA'){const x=outSel(k==='OA'),ids=new Set(x.map(e=>e.id));D=D.filter(e=>!ids.has(e.id));save();render();msg(x.length+' conta(s) paga(s) apagada(s).');return}
+if(k==='M'){const x=mesSel(),ids=new Set(x.d.map(e=>e.id)),tid=new Set(x.t.map(t=>t.id));D=D.filter(e=>!ids.has(e.id));T=T.filter(t=>!tid.has(t.id));x.c.forEach(q=>delete C[q]);save();saveT();saveC();render();msg(mname(x.m)+' apagado: '+x.d.length+' lançamentos.');return}
+if(k==='D'||k==='all'){D=D.filter(()=>false);save()}
+if(k==='T'||k==='all'){T=[];saveT()}
+if(k==='C'||k==='all'){C={};saveC()}
+render();msg('Dados apagados.')}
+function delT1(m,l){T=T.filter(t=>!(t.month===m&&(t.loja||'')===l));saveT();render();msg('Total do período removido.')}
+function dadosCard(){const so={},mo={};D.forEach(e=>{const k=e.source+' · '+(e.type==='out'?'despesa':'entrada');(so[k]=so[k]||{n:0,v:0}).n++;so[k].v+=e.amount;const m=e.date.slice(0,7);(mo[m]=mo[m]||{n:0}).n++});
+const tg={};T.forEach(t=>{const k=t.month+'|'+(t.loja||'');(tg[k]=tg[k]||{m:t.month,l:t.loja||'',n:0,v:0}).n++;tg[k].v+=t.amount});
+const tl=Object.values(tg).sort((a,b)=>b.m.localeCompare(a.m)),cn=Object.keys(C).length;
+const ask=(k,txt)=>wipe===k?`<div class="stt bad">Apagar ${txt}? Não dá para desfazer.</div><div class="g"><button class="b" onclick="wGo()">Sim, apagar</button><button class="s" onclick="wNo()">Cancelar</button></div>`:`<button class="s" onclick="wAsk('${k}')">Apagar ${txt}</button>`;
+return mesCard()+`<details class="cd"><summary>Dados guardados neste navegador</summary><span class="mu">Tudo o que o painel está somando. Se aparecer um valor que você não reconhece, ele está em uma destas listas.</span>
+<h2>Lançamentos</h2>${Object.keys(so).length?Object.entries(so).map(([k,x])=>`<div class="li"><span>${esc(k)}<br><span class="mu">${x.n} lançamento(s)</span></span><span class="mono">${fn(x.v)}</span></div>`).join('')+ask('D','todos os lançamentos'):'<span class="mu">Nenhum lançamento guardado.</span>'}
+<h2>Totais do período (Ssotica)</h2>${tl.length?tl.map(x=>`<div class="li"><span>${mname(x.m)} · ${esc(x.l?ljName(x.l):'sem loja')}<br><span class="mu">${x.n} forma(s) de pagamento</span></span><span class="mono">${fn(x.v)} <button class="x" aria-label="Apagar" onclick="delT1('${x.m}','${esc(x.l)}')">✕</button></span></div>`).join('')+ask('T','todos os totais do período'):'<span class="mu">Nenhum total do período guardado.</span>'}
+<h2>Caixa em dinheiro</h2>${cn?`<span class="mu">${cn} saldo(s) inicial/contagem guardado(s).</span>`+ask('C','os saldos do caixa em dinheiro'):'<span class="mu">Nenhum saldo guardado.</span>'}
+${ask('all','tudo (lançamentos, totais e saldos)')}</details>`}
+/* ---------- backup ---------- */
+function backup(){return `<details class="cd"><summary>Backup dos dados</summary><span class="mu">Seus lançamentos ficam salvos neste navegador. Baixe uma cópia de vez em quando para não perder.</span>
+${DL?'<button class="s" onclick="bkp()">Baixar backup (.json)</button>':''}
+<div><label for="rf">Restaurar de um backup</label><input type="file" id="rf" accept=".json" onchange="rst(this.files[0])"></div></details>`}
+async function bkp(){try{await DL.save({filename:'backup-pagamentos-'+iso(new Date())+'.json',data:JSON.stringify({D,T,C})});try{localStorage.setItem('pag4',String(Date.now()))}catch(e){}msg('Backup salvo.')}catch(e){if(!e||e.code!=='declined')msg('Não foi possível salvar o backup aqui.')}}
+async function rst(f){if(!f)return;try{const j=JSON.parse(await f.text()),a=Array.isArray(j)?j:(j.D||[]),ids=new Set(D.map(e=>e.id)),tids=new Set(T.map(e=>e.id));(Array.isArray(j)?[]:(j.T||[])).forEach(t=>{if(t&&t.id&&!tids.has(t.id))T.push(t)});Object.entries(j.C||{}).forEach(([k,v])=>{if(!(k in C))C[k]=v});saveC();saveT();let n=0;a.forEach(e=>{if(e&&e.id&&e.date&&e.amount&&!ids.has(e.id)){D.push(e);n++}});save();render();msg(n+' lançamentos restaurados.')}catch(e){msg('Arquivo de backup inválido.')}}
+
+const COL=new Set();try{(JSON.parse(sessionStorage.getItem('pagCol')||'[]')).forEach(x=>COL.add(x))}catch(e){}
+function applyCol(){document.querySelectorAll('#v section.cd').forEach(sc=>{const h=sc.querySelector(':scope>h2,:scope>.fh>h2');if(!h)return;const k=h.textContent.trim().split(' · ')[0].replace(/\s*\(\d+\)$/,'');sc.classList.toggle('col',COL.has(k))})}
+document.addEventListener('click',ev=>{const h=ev.target.closest&&ev.target.closest('#v .cd>h2,#v .cd>.fh>h2');if(!h)return;const sc=h.closest('.cd'),k=h.textContent.trim().split(' · ')[0].replace(/\s*\(\d+\)$/,'');if(COL.has(k))COL.delete(k);else COL.add(k);try{sessionStorage.setItem('pagCol',JSON.stringify([...COL]))}catch(e){}applyCol()});
+const ICO={painel:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',ent:'<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16"/>',mum:'<circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/>',pix:'<path d="M12 2l4 4-4 4-4-4zM12 14l4 4-4 4-4-4zM2 12l4-4 4 4-4 4zM14 12l4-4 4 4-4 4z"/>',car:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',out:'<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6"/>',dados:'<path d="M4 7c0-2 4-3 8-3s8 1 8 3-4 3-8 3-8-1-8-3zM4 7v10c0 2 4 3 8 3s8-1 8-3V7"/>'};
+function tgSb(){const a=$('#app');if(innerWidth>860){a.classList.toggle('nosb');setTimeout(drawAcum,30)}else a.classList.toggle('open')}
+function goTab(t){tab=t;$('#app').classList.remove('open');render();window.scrollTo(0,0)}
+function seedDemo(){let sd=11;const r=()=>(sd=sd*16807%2147483647)/2147483647,ri=(a,b)=>a+Math.floor(r()*(b-a+1)),r2=x=>Math.round(x*100)/100,id=()=>'x'+(sd++)+Math.random().toString(36).slice(2,6);
+const now=new Date(),Y=now.getFullYear(),M=now.getMonth()+1,last=Math.min(now.getDate(),30),NM=['Marcia Lima','Brasil Doces','Leandro Souza','Elisangela Reis','Viviane Costa','Ibrahim Silva','Adriana Matos','Claudia Andrade'],BRS=['Mastercard','Visa','Elo'],push=o=>D.push({id:id(),demo:true,brand:'',desc:'',cat:'',hora:'',cli:'',os:'',...o});
+['OH! ICARAÍ','OH! CENTRO'].forEach((lj,li)=>{for(let d=1;d<=last;d++){const dt=new Date(Y,M-1,d);if(dt.getDay()===0)continue;const k=Y+'-'+pad(M)+'-'+pad(d);
+for(let i=0;i<(li?ri(1,2):ri(2,4));i++){const v=r2(ri(60,900)+ri(0,99)/100),nm=NM[ri(0,NM.length-1)],base={date:k,type:'in',loja:lj,method:'Pix',amount:v};
+const skipSs=li===0&&d===6&&i===0,diff=li===0&&d===12&&i===0;
+push({...base,source:'Stone',desc:'Pix '+nm,cli:nm});if(!skipSs)push({...base,source:'Ssotica',amount:diff?r2(v+45):v,cli:nm,os:String(ri(1000,9999)),cat:'Vendas',hora:pad(ri(9,17))+':'+pad(ri(0,59)),dest:'Banco'})}
+if(li===0&&d===18)push({date:k,type:'in',loja:lj,method:'Pix',amount:230,source:'Ssotica',cli:'Cliente sem Pix na Stone',cat:'Vendas',hora:'15:20'});
+for(let i=0;i<ri(1,3);i++){const v=r2(ri(120,1800)+ri(0,99)/100),me=r()>.5?'Crédito':'Débito',br=BRS[ri(0,2)],base={date:k,type:'in',loja:lj,method:me,brand:br,amount:v};
+push({...base,source:'Ssotica',cli:NM[ri(0,7)],cat:'Vendas',os:String(ri(1000,9999)),hora:pad(ri(9,17))+':'+pad(ri(0,59))});if(!(li===0&&d===15&&i===0)&&d<last-1)push({...base,source:'Stone',vend:true,desc:'Venda cartão '+me+' '+br})}}});
+[4,9,15,21,26].filter(d=>d<=last).forEach((d,i)=>{const k=Y+'-'+pad(M)+'-'+pad(d),v=r2(ri(150,700)+.5);push({date:k,type:'in',loja:'OH! ICARAÍ',method:'Mumbuca',amount:v,source:'Mumbuca',cli:NM[i]});if(i!==3)push({date:k,type:'in',loja:'OH! ICARAÍ',method:'Mumbuca',amount:v,source:'Ssotica',cli:NM[i],cat:'Vendas',hora:'11:10'})});
+[3,8,13,19,24].filter(d=>d<=last).forEach((d,i)=>{const k=Y+'-'+pad(M)+'-'+pad(d),v=r2(ri(200,2500)+.9),me=i%2?'Boleto':'Pix';
+push({date:k,type:'out',loja:'OH! ICARAÍ',method:me,amount:v,source:'Stone',desc:me+' enviado FORNECEDOR '+(i+1)});
+if(i!==2)push({date:k,type:'out',loja:'OH! ICARAÍ',method:me,amount:i===3?r2(v+10):v,source:'Ssotica',conta:i===1?'Itaú':'Stone',desc:'Pagamento fornecedor '+(i+1)+' '+me})});
+save()}
+function rmDemo(){D=D.filter(e=>!e.demo);try{localStorage.setItem('pagDemoOff','1')}catch(e){}save();render();msg('Exemplo removido.')}
+function render(){
+$('#nav').innerHTML=TABS.map((t,i)=>(t[0]==='dados'?'<hr>':'')+`<button class="${tab===t[0]?'on':''}" onclick="goTab('${t[0]}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICO[t[0]]}</svg>${t[1]}</button>`).join('');
+$('#pg').textContent=(TABS.find(t=>t[0]===tab)||['','Painel'])[1];
+$('#ljbox').innerHTML=`<label for="ls" style="display:none">Loja</label><select id="ls" aria-label="Loja" onchange="LF=this.value;render()"><option value="">Todas as lojas</option>${LJ.map(k=>`<option ${k===LF?'selected':''}>${k}</option>`).join('')}</select>`;
+$('#v').innerHTML=`<div class="${tab==='painel'?'pgd':'pgn'}" style="display:flex;flex-direction:column;gap:14px">${tab==='painel'?painel():tab==='ent'?entTab():tab==='mum'?mumTab():tab==='pix'?pixTab():tab==='car'?carTab():tab==='out'?contas()+lista('out')+outCard():tab==='dados'?fileCheck()+dadosCard()+backup():lista(tab)}</div>`;
+if(IMPT.includes(tab)&&files.length)showPv();else if(!IMPT.includes(tab))files=[];applyCol();if(tab==='painel')drawAcum()}
+let _dm=false;try{_dm=!!localStorage.getItem('pagDemoOff')}catch(e){}
+if(DEMO_BUILD&&!D.length&&!_dm)seedDemo();
+render();
+try{window.claude&&claude.use&&claude.use('downloads').then(x=>{if(x){DL=x;if(tab==='painel')render()}}).catch(()=>{})}catch(e){}
+</script>
+
+</body></html>

@@ -1,0 +1,256 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Controle de Férias</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: barra de topo com marca e voltar ao início, resumo em três cartões com borda de status, funcionários em cartões com avatar. Verde-azulado = cor da área Férias. */
+:root{--bg:#eef3f1;--cd:#fff;--tx:#12241f;--mu:#5a6c66;--bd:#d9e3df;--ac:#0f7a65;--acx:#fff;--acs:#dff2ec;--ok:#1a7f4b;--wa:#9a5b00;--er:#b3342b;--nb:#e7eeeb;--sh:0 1px 2px rgba(18,36,31,.06);
+--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1816;--cd:#15231f;--tx:#e6f0ed;--mu:#97aaa4;--bd:#26372f;--ac:#4fd1b3;--acx:#06211b;--acs:#12302a;--ok:#5fd394;--wa:#e5b04a;--er:#ff8f84;--nb:#1b2b26;--sh:none;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1816;--cd:#15231f;--tx:#e6f0ed;--mu:#97aaa4;--bd:#26372f;--ac:#4fd1b3;--acx:#06211b;--acs:#12302a;--ok:#5fd394;--wa:#e5b04a;--er:#ff8f84;--nb:#1b2b26;--sh:none;color-scheme:dark}
+*,*:before,*:after{box-sizing:border-box}
+html,body{margin:0}body{background:var(--bg);color:var(--tx);font:15px/1.45 var(--sans)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--cd)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--cd);border-bottom:1px solid var(--bd)}
+.top>div{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:12px;min-height:60px;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.logo{width:38px;height:38px;border-radius:8px;background:var(--ac);color:var(--acx);display:grid;place-items:center;flex:none}
+.top h1{font-size:18px;font-weight:600;letter-spacing:-.2px;margin:0;line-height:1.2}
+.top .mu{display:block;line-height:1.3}
+.top .sp{flex:1}
+.back{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid var(--bd);border-radius:8px;color:var(--tx);text-decoration:none;font-size:14px;font-weight:500;background:var(--cd)}
+.back:hover{background:var(--bg)}
+.w{max-width:960px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mu{color:var(--mu);font-size:13px}
+button,select,input{font:inherit;color:var(--tx)}
+button{background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:7px 12px;min-height:38px;cursor:pointer;font-weight:500}
+button:hover{background:var(--bg)}
+button.p{background:var(--ac);border-color:var(--ac);color:var(--acx);font-weight:600}
+button.p:hover{filter:brightness(1.08)}
+button.x{padding:0 8px;min-height:30px;border:0;background:none;color:var(--er)}
+button.x:hover{background:var(--nb)}
+input,select{background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;min-height:38px}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0;align-items:center;padding:12px;background:var(--cd);border:1px solid var(--bd);border-radius:10px}
+.bar select{min-width:0;max-width:100%}
+.sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0}
+.sum div{background:var(--cd);border:1px solid var(--bd);border-top:4px solid var(--bd);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--sh);min-width:0;transition:border-color .15s}
+.sum div:hover{border-color:var(--ac)}
+.sum div:nth-child(1){border-top-color:var(--er)}.sum div:nth-child(2){border-top-color:var(--wa)}.sum div:nth-child(3){border-top-color:var(--ok)}
+.sum b{font:600 clamp(26px,5vw,34px)/1.1 var(--sans);font-variant-numeric:tabular-nums}
+.sum .mu{font-size:13px}
+@media (max-width:520px){.sum{gap:8px}.sum div{padding:10px}.sum .mu{font-size:12px}}
+.co{margin:26px 0 10px;display:flex;align-items:center;gap:10px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu)}
+.co::after{content:"";flex:1;height:1px;background:var(--bd)}
+.em{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:var(--sh)}
+.em h3{margin:0;font-size:17px;font-weight:600;display:flex;align-items:center;gap:10px;min-width:0}
+.av{flex:none;width:36px;height:36px;border-radius:50%;background:var(--acs);color:var(--ac);display:grid;place-items:center;font:600 13px var(--sans);font-style:normal;letter-spacing:.02em}
+.pr{border-top:1px solid var(--bd);margin-top:12px;padding-top:12px}
+.row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.row>*{min-width:0}
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;border:0;background:var(--nb)}
+.tag.ok{background:color-mix(in srgb,var(--ok) 15%,transparent)}.tag.wa{background:color-mix(in srgb,var(--wa) 16%,transparent)}.tag.er{background:color-mix(in srgb,var(--er) 14%,transparent)}
+.ok{color:var(--ok)}.wa{color:var(--wa)}.er{color:var(--er)}.nt{color:var(--mu)}
+.g{font-size:13px;margin-top:6px;padding:7px 10px;border-radius:8px;background:var(--bg);display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.g button{min-height:30px;padding:3px 10px;font-size:13px}
+dialog{background:var(--cd);color:var(--tx);border:1px solid var(--bd);border-radius:12px;max-width:460px;width:calc(100% - 32px);padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(8,16,14,.55)}
+dialog label{display:block;margin:12px 0 4px;font-size:13px;color:var(--mu)}
+dialog input,dialog select{max-width:100%}
+.fr{display:flex;gap:6px;margin:6px 0}.fr input{min-width:0}
+.tabs{display:inline-flex;gap:0;margin:0 0 16px;border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:var(--cd)}
+.tabs button{border:0;border-radius:0;padding:8px 16px;background:none;color:var(--mu)}
+.tabs button.on{background:var(--ac);color:var(--acx)}
+.cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.mo{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:10px;min-width:0}.mo b{display:block;font-size:13px;margin-bottom:6px;font-weight:600}
+.d7{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:11px}.d7 i{font-style:normal;color:var(--mu)}
+.dy{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:5px;color:var(--tx);position:relative;font-variant-numeric:tabular-nums}
+.dy.c{color:#fff;font-weight:600}.dy.c.p{opacity:.5}.dy.v::after{content:'✓';position:absolute;right:2px;top:-1px;font-size:9px}
+.dy.t{outline:2px solid var(--ac)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:99}
+.lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0;font-size:13px}.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.note{margin-top:28px;padding:12px 14px;border-radius:8px;background:var(--cd);border:1px solid var(--bd)}
+.em .pr:first-of-type{margin-top:10px}
+details.mr{margin-top:12px;border-top:1px solid var(--bd);padding-top:8px}
+details.mr>summary,details.mm>summary{cursor:pointer;color:var(--mu);font-size:13px;font-weight:500;min-height:36px;display:flex;align-items:center;list-style:none}
+details.mr>summary::-webkit-details-marker,details.mm>summary::-webkit-details-marker{display:none}
+details.mr>summary::before{content:"▸";margin-right:6px}details.mr[open]>summary::before{content:"▾"}
+details.mr label input{padding:4px 8px;min-height:32px}
+details.mm{margin-left:auto;position:relative}
+details.mm>summary{border:1px solid var(--bd);border-radius:8px;padding:0 14px;color:var(--tx);background:var(--cd)}
+details.mm>summary::after{content:"▾";margin-left:6px}
+details.mm>div{position:absolute;right:0;top:44px;z-index:5;background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+details.mm label{display:flex;align-items:center;gap:8px;margin:0}
+.pr .row{align-items:flex-start}
+@media print{.w,.top,#toast,.noprint{display:none!important}dialog{border:0;color:#000;background:#fff;max-width:100%}}
+
+.em2{padding:0}.em2>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;min-height:64px}
+.em2>summary::-webkit-details-marker{display:none}
+.em2 .nm{display:flex;flex-direction:column;min-width:0;flex:1}.em2 .nm b{font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.em2 .rt{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.em2 .chev{color:var(--mu);font-size:22px;line-height:1;transition:transform .15s}.em2[open] .chev{transform:rotate(90deg)}
+.em2 .bd2{border-top:1px solid var(--bd);padding:4px 16px 16px}
+.co2{margin:18px 0 0;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mu)}
+@media (max-width:560px){.em2>summary{flex-wrap:wrap}.em2 .nm{flex-basis:calc(100% - 80px)}.em2 .rt{order:3;flex-basis:100%;justify-content:flex-start}.em2 .chev{margin-left:auto}}
+</style><header class="top"><div><span class="logo" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><div><h1>Controle de Férias</h1><span class="mu">Prazo, férias já dadas e fracionamento (CLT)</span></div><span class="sp"></span><a class="back" href="../">← Início</a></div></header><div class="w">
+<div class="sum" style="margin-top:0"><div onclick="openS(0)" style="cursor:pointer"><b id="s1" class="er">0</b><span class="mu">vencidas ›</span></div><div onclick="openS(1)" style="cursor:pointer"><b id="s2" class="wa">0</b><span class="mu">vencem em ≤ 60 dias ›</span></div><div onclick="openS(2)" style="cursor:pointer"><b id="s3" class="ok">0</b><span class="mu">no prazo ›</span></div></div>
+<div class="bar"><select id="fc"></select><button class="p" onclick="openE()">+ Funcionário</button><details class="mm"><summary>Mais</summary><div><label class="mu"><input type="checkbox" id="so" onchange="render()"> Mostrar desligados</label><button onclick="exp()">Exportar backup</button><button onclick="document.getElementById('imp').click()">Importar backup</button></div></details><input type="file" id="imp" accept=".json" hidden></div>
+<div class="tabs"><button id="tl" onclick="setV('l')">Lista</button><button id="tc" onclick="setV('c')">Calendário anual</button></div><div id="L"></div><div id="C" hidden></div>
+<p class="mu note">Regras usadas: fracionar em até 3 períodos (um com ≥14 dias, os demais ≥5); abono = vender até 10 dias. "Conceder até" segue o padrão do seu relatório (fim do período aquisitivo + 331 dias). Dados ficam salvos neste navegador — use o backup.</p>
+</div>
+
+<dialog id="dg"><form method="dialog" onsubmit="return false" oninput="est()">
+<h3 id="dt" style="margin:0 0 6px"></h3>
+<label>Modelo</label>
+<select id="md" onchange="preset()"><option value="30">30 dias seguidos</option><option value="15">15 + 15 dias</option><option value="ab">Vender 10 dias + 14 e 6 dias</option><option value="c">Personalizado</option></select>
+<label><input type="checkbox" id="ab"> Vender 10 dias (abono pecuniário)</label>
+<label>Frações (início e dias)</label><div id="fr"></div>
+<button type="button" onclick="addF()">+ fração</button> <button type="button" onclick="sug()">✨ Sugerir datas livres</button>
+<label>Salário mensal (opcional; fica só neste navegador)</label><input id="sal" type="number" step="0.01" style="width:100%"><div id="est" class="mu" style="margin-top:4px"></div>
+<p id="er" class="er" style="white-space:pre-line;margin:8px 0 0"></p><div class="row" style="margin-top:14px"><button type="button" onclick="dg.close()">Cancelar</button><button type="button" class="p" onclick="save()">Salvar</button></div>
+</form></dialog>
+
+<dialog id="de"><form method="dialog" onsubmit="return false">
+<h3 style="margin:0 0 6px">Novo funcionário</h3>
+<label>Empresa/loja</label><input id="ee" style="width:100%" list="cl">
+<datalist id="cl"></datalist>
+<label>Nome</label><input id="en" style="width:100%">
+<label>Admissão</label><input id="ea" type="date" style="width:100%">
+<label>Início do 1º período aquisitivo ainda em aberto</label><input id="ei" type="date" style="width:100%">
+<p id="er2" class="er" style="margin:8px 0 0"></p><div class="row" style="margin-top:14px"><button type="button" onclick="de.close()">Cancelar</button><button type="button" class="p" onclick="saveE()">Salvar</button></div>
+</form></dialog>
+
+<dialog id="dc"><form method="dialog" onsubmit="return false"><p id="dct" style="white-space:pre-line;margin:0 0 12px"></p><div class="row"><button type="button" onclick="$('dc').close()">Cancelar</button><button type="button" class="p" id="dcy" onclick="$('dc').close();cb&&cb()">Confirmar</button></div></form></dialog>
+<dialog id="ds"><h3 id="dst" style="margin:0 0 4px"></h3><div id="dsb" style="max-height:60vh;overflow:auto"></div><div class="row" style="margin-top:12px"><span></span><button onclick="$('ds').close()">Fechar</button></div></dialog>
+<dialog id="dp"><div id="dpb" style="line-height:1.6"></div><div class="row noprint" style="margin-top:12px"><button onclick="$('dp').close()">Fechar</button><button class="p" onclick="window.print()">Imprimir</button></div><div class="mu noprint" style="margin-top:6px">Se a impressão não abrir, copie o texto ou use Ctrl+P.</div></dialog>
+<div id="toast" hidden></div>
+<script>
+const KEY='ferias_v2',dg=document.getElementById('dg'),de=document.getElementById('de');
+const $=i=>document.getElementById(i);
+const D=s=>new Date(s+'T00:00:00Z'),iso=d=>d.toISOString().slice(0,10);
+const add=(s,n)=>{const d=D(s);d.setUTCDate(d.getUTCDate()+n);return iso(d)};
+const br=s=>s?s.split('-').reverse().join('/'):'sem data';
+const diff=(a,b)=>Math.round((D(b)-D(a))/864e5);
+const t0=new Date();const today=iso(new Date(t0-t0.getTimezoneOffset()*6e4));
+const seed=()=>{const M='Centro Ótico Maricá',I='Ótica de Icaraí (matriz)',J='Ótica de Icaraí (filial)',A='Art Ótica',R='Centro Ótico Rio Bonito',P='Ótica de Itaipuaçu';
+const e=[[M,'Henrique Maciel do Nascimento Santos','2020-09-01','2024-09-01'],[M,'Cassia Roza Martins','2022-04-01','2024-04-01'],[M,'Amanda Silva dos Santos','2025-12-01','2025-12-01'],[M,'Maury Mauá de Queiroz Neto','2025-12-01','2025-12-01'],
+[I,'Diego de Souza Moura','2021-06-11','2023-06-11'],[I,'Letycia Vitorio de Oliveira','2024-01-02','2025-01-02'],
+[J,'Thiago Loureiro de Assis Mascarenhas','2022-05-02','2024-05-02'],[J,'Julio César Nunes do Couto','2022-11-01','2023-11-01'],
+[A,'Lorraine da Silva Ribeiro','2024-07-01','2025-07-01'],[R,'Juliana Esthefany Carvalho Alves','2024-03-11','2025-03-11'],[R,'Elio Salim Barbosa da Silveira','2025-10-01','2025-10-01'],[P,'Aguinaldo Braga Silveira','2025-08-04','2025-08-04']]
+.map((x,i)=>({id:'e'+i,emp:x[0],nome:x[1],adm:x[2],ini:x[3]}));
+return{emps:e,reg:{'e4|2023-06-11':{abono:0,gozos:[{ini:'',dias:15,obs:'já gozados (relatório)'}]},'e0|2024-09-01':{abono:0,gozos:[{ini:'2026-04-06',dias:15},{ini:'2026-11-03',dias:15}]},
+'e1|2024-04-01':{abono:10,gozos:[{ini:'2026-02-02',dias:20}]},
+'e6|2024-05-02':{abono:0,gozos:[{ini:'2026-01-19',dias:15},{ini:'2026-03-26',dias:15}]},
+'e7|2023-11-01':{abono:0,gozos:[{ini:'2025-07-21',dias:15},{ini:'2025-09-22',dias:15}]},
+'e7|2024-11-01':{abono:0,gozos:[{ini:'2026-05-18',dias:15},{ini:'2026-09-21',dias:15}]},
+'e5|2025-01-02':{abono:0,gozos:[{ini:'2026-04-20',dias:15},{ini:'2026-08-24',dias:15}]}}}};
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S||!S.emps)S=seed();
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+if(!S.mig)S.mig={};
+if(!S.mig.erica){S.emps.push({id:'erica1',emp:'Centro Ótico Tanguá',nome:'Erica',adm:'2022-11-03',ini:'2022-11-03',ci:S.emps.reduce((m,e,i)=>Math.max(m,e.ci!=null?e.ci:i),-1)+1});
+Object.assign(S.reg,{'erica1|2022-11-03':{abono:10,gozos:[{ini:'2024-07-15',dias:14},{ini:'2024-11-18',dias:6}]},
+'erica1|2023-11-03':{abono:10,gozos:[{ini:'2025-07-16',dias:14},{ini:'2025-11-17',dias:6}]},
+'erica1|2024-11-03':{abono:10,gozos:[{ini:'2026-07-20',dias:14}]}});S.mig.erica=1;persist()}
+function periods(e){const r=[];let s=e.ini;while(s<=today){const d=D(s);d.setUTCFullYear(d.getUTCFullYear()+1);const f=add(iso(d),-1);r.push({s,f,c:add(f,331)});s=iso(d)}return r}
+const rg=(id,s)=>S.reg[id+'|'+s]||{abono:0,gozos:[]};
+const saldo=(id,p)=>{const g=rg(id,p.s);return 30-g.abono-g.gozos.reduce((a,x)=>a+x.dias,0)};
+function stat(id,p){const sd=saldo(id,p);if(sd<=0){const gz=rg(id,p.s).gozos;return gz.some(x=>x.ini>today)?{t:'Agendada',c:'ok',k:3}:gz.every(fin)?{t:'Concluído',c:'ok',k:3}:{t:'Confirmar conclusão',c:'wa',k:3}}
+if(p.f>=today)return{t:'Em aquisição',c:'nt',k:3};
+const d=diff(today,p.c);if(d<0)return{t:'VENCIDA há '+(-d)+' d',c:'er',k:0};if(d<=60)return{t:'Vence em '+d+' d',c:'wa',k:1};return{t:'No prazo ('+d+' d)',c:'ok',k:2}}
+let LS=[[],[],[],[]];const OPEN=new Set();const tgO=(id,o)=>{o?OPEN.add(id):OPEN.delete(id)};
+function render(){LS=[[],[],[],[]];S.emps.forEach((e,i)=>{if(e.ci==null)e.ci=i});const cs=[...new Set(S.emps.map(e=>e.emp))];const fc=$('fc'),cur=fc.value;
+fc.innerHTML='<option value="">Todas as empresas</option>'+cs.map(c=>`<option ${c==cur?'selected':''}>${c}</option>`).join('');
+$('cl').innerHTML=cs.map(c=>`<option value="${c}">`).join('');
+const n=[0,0,0,0];let h='';
+const by={};S.emps.forEach(e=>{if(cur&&e.emp!=cur)return;if(e.sai&&!$('so').checked)return;(by[e.emp]=by[e.emp]||[]).push(e)});
+for(const c in by){h+=`<div class="co">${c}</div>`;
+const L=by[c].map(e=>{const ps=periods(e);let m=9;ps.forEach(p=>{const k=stat(e.id,p).k;if(k<m)m=k});const open=ps.filter(p=>saldo(e.id,p)>0&&p.f<today).map(p=>p.c).sort()[0]||'9';return{e,ps,m,open}}).sort((a,b)=>a.open<b.open?-1:1);
+L.forEach(({e,ps})=>{const H0=h,MAIN=[],HIST=[];h='';
+ps.slice().reverse().forEach(p=>{const st=e.sai?{t:'Desligado',c:'nt',k:3}:stat(e.id,p),g=rg(e.id,p.s),sd=Math.max(0,saldo(e.id,p));n[st.k]++;if(st.k<3)LS[st.k].push({e,p,sd,st});const H1=h;h='';
+h+=`<div class="pr"><div class="row"><div><b>${br(p.s)} a ${br(p.f)}</b><div class="mu">Conceder até <b>${br(p.c)}</b> · saldo ${sd} dia(s)</div></div><div><span class="tag ${st.c}">${st.t}</span> ${sd>0?`<button onclick="openR('${e.id}','${p.s}')">Registrar férias</button>`:''}</div></div>`;
+g.gozos.forEach((x,i)=>{const lt=x.ini&&x.ini>p.c?' <span class="er">⚠ após o prazo</span>':'',fn=fin(x),T=`tog('${e.id}','${p.s}',${i})`,avs=x.ini>today&&!e.sai?` <span class="${add(x.ini,-30)<today?'er':'mu'}">· avisar até ${br(add(x.ini,-30))} · pagar até ${br(add(x.ini,-2))}</span>`:'';
+h+=`<div class="g">${fn?'✅':x.ini>today?'📅':'⏳'} ${x.ini?br(x.ini)+' a '+br(add(x.ini,x.dias-1)):'(sem data)'} · ${x.dias} dias${x.ini&&fn?' · concluída':x.ini>today?' · agendada':''}${x.obs?' · '+x.obs:''}${lt}${avs} ${x.ini&&!fn&&x.ini<=today?`<button onclick="${T}">Confirmar conclusão</button>`:''}${x.ini&&fn?`<button class="x" style="color:var(--mu)" onclick="${T}">desfazer</button>`:''} ${x.ini?`<button class="x" style="color:var(--mu)" onclick="prn('${e.id}','${p.s}',${i})" title="Aviso e recibo">🖨</button>`:''}<button class="x" onclick="delG('${e.id}','${p.s}',${i})">✕</button></div>`});
+if(g.abono)h+=`<div class="g">💰 ${g.abono} dias vendidos (abono) <button class="x" onclick="delAb('${e.id}','${p.s}')">✕</button></div>`;
+h+='</div>';const show=!['Em aquisição','Concluído','Desligado'].includes(st.t);(show?MAIN:HIST).push({b:h,st,p,sd});h=H1});
+const wi=MAIN.reduce((a,x)=>!a||x.st.k<a.st.k||(x.st.k==a.st.k&&x.p.c<a.p.c)?x:a,null),w=wi&&wi.st,ini=(e.nome.match(/\p{L}+/gu)||[""]).filter((q,i,a)=>i==0||i==a.length-1).map(q=>q[0]).join("").toUpperCase();
+h=H0+`<details class="em em2" ${OPEN.has(e.id)?'open':''} ontoggle="tgO('${e.id}',this.open)"><summary><i class="av">${ini}</i><span class="nm"><b>${e.nome}</b><span class="mu">${e.sai?'Desligado':wi?'Conceder até '+br(wi.p.c):'Sem pendências'}</span></span><span class="rt">${e.sai?'<span class="tag nt">Desligado</span>':w?`<span class="tag ${w.c}">${w.t}</span>`:'<span class="tag ok">Em dia</span>'}${wi&&wi.sd>0&&!e.sai?`<button class="p" onclick="event.preventDefault();event.stopPropagation();openR('${e.id}','${wi.p.s}')">Registrar férias</button>`:''}</span><span class="chev" aria-hidden="true">›</span></summary><div class="bd2"><div class="mu">Admissão ${br(e.adm)}</div>${MAIN.map(x=>x.b).join('')}${HIST.length?`<div class="co2">Períodos concluídos ou em aquisição (${HIST.length})</div>${HIST.map(x=>x.b).join('')}`:''}<div class="row" style="margin-top:14px"><label class="mu">Saída: <input type="date" value="${e.sai||''}" onchange="sai('${e.id}',this.value)"></label><button class="x" onclick="delE('${e.id}')" title="Remover funcionário">🗑 Remover</button></div></div></details>`})}
+$('L').innerHTML=h||'<p class="mu">Nenhum funcionário.</p>';$('s1').textContent=n[0];$('s2').textContent=n[1];$('s3').textContent=n[2];vw()}
+$('fc').onchange=render;
+let view='l',cy=+today.slice(0,4);
+const pad=n=>String(n).padStart(2,'0');
+const col=i=>{const c=S.emps[i].ci;return `hsl(${Math.round(c*137.5)%360},55%,${c%2?36:44}%)`};
+const fin=x=>x.ok||!x.ini;
+function setV(v){view=v;vw()}
+function vw(){$('L').hidden=view!='l';$('C').hidden=view!='c';$('tl').className=view=='l'?'on':'';$('tc').className=view=='c'?'on':'';if(view=='c')cal()}
+function cal(){const f=$('fc').value,map={},used={},pend={},L2=[];
+S.emps.forEach((e,i)=>{if(f&&e.emp!=f)return;Object.keys(S.reg).forEach(k=>{if(k.split('|')[0]!=e.id)return;S.reg[k].gozos.forEach((x,gi)=>{if(!x.ini)return;let iy=0;const fn=fin(x);for(let j=0;j<x.dias;j++){const d=add(x.ini,j);if(+d.slice(0,4)!=cy)continue;iy=1;const a=map[d]=map[d]||[];a.includes(i)||a.push(i);if(!fn)pend[d]=1;used[i]=(used[i]||0)+1}if(iy)L2.push({i,k,gi,x})})})});
+const M=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+let h=`<div class="row"><div><button onclick="cy--;cal()">◀</button> <b style="font-size:18px">${cy}</b> <button onclick="cy++;cal()">▶</button></div><span class="mu">✓ = concluída e confirmada · cor clara = agendada/aguardando</span></div>`;
+const ids=Object.keys(used).sort((a,b)=>a-b);
+h+='<div class="lg">'+(ids.length?ids.map(i=>`<span><i style="background:${col(i)}"></i>${S.emps[i].nome.split(' ')[0]} (${used[i]} d)</span>`).join(''):'<span class="mu">Nenhuma férias com data neste ano.</span>')+'</div><div class="cal">';
+for(let m=0;m<12;m++){const dow=new Date(Date.UTC(cy,m,1)).getUTCDay(),nd=new Date(Date.UTC(cy,m+1,0)).getUTCDate();
+h+=`<div class="mo"><b>${M[m]}</b><div class="d7">`+['D','S','T','Q','Q','S','S'].map(x=>`<i>${x}</i>`).join('')+'<span></span>'.repeat(dow);
+for(let d=1;d<=nd;d++){const ds=`${cy}-${pad(m+1)}-${pad(d)}`,a=map[ds]||[];let st='',cl='dy'+(ds==today?' t':'');
+if(a.length){const n=a.length;cl+=' c'+(pend[ds]?' p':' v');st=n==1?`background:${col(a[0])}`:`background:linear-gradient(90deg,${a.map((x,k)=>`${col(x)} ${k*100/n}% ${(k+1)*100/n}%`).join(',')})`}
+h+=`<div class="${cl}" style="${st}" title="${a.map(x=>S.emps[x].nome).join(' / ')}">${d}</div>`}
+h+='</div></div>'}
+h+='</div><h3 style="margin:18px 0 6px;font-size:15px">Confirmação das férias de '+cy+'</h3>';
+L2.sort((a,b)=>a.x.ini<b.x.ini?-1:1);
+h+=L2.length?L2.map(o=>{const x=o.x,e=S.emps[o.i],end=add(x.ini,x.dias-1),fn=fin(x),[id,s]=o.k.split('|');
+const tag=fn?'<span class="tag ok">✓ Concluída</span>':end<today?'<span class="tag wa">Terminou — confirmar</span>':x.ini>today?'<span class="tag nt">Agendada</span>':'<span class="tag nt">Em andamento</span>';
+return `<div class="em row"><div><b>${e.nome}</b><div class="mu">${br(x.ini)} a ${br(end)} · ${x.dias} dias</div></div><div>${tag} ${fn||x.ini<=today?`<button onclick="tog('${id}','${s}',${o.gi})">${fn?'Desfazer':'Confirmar conclusão'}</button>`:''}</div></div>`}).join(''):'<p class="mu">Sem férias com data neste ano.</p>';
+$('C').innerHTML=h}
+function busy(emp,exc){const m={};S.emps.forEach(e=>{if(e.emp!=emp||e.id==exc||e.sai)return;Object.keys(S.reg).forEach(k=>{if(k.split('|')[0]!=e.id)return;S.reg[k].gozos.forEach(x=>{if(!x.ini)return;for(let j=0;j<x.dias;j++){const d=add(x.ini,j);(m[d]=m[d]||[]).push(e.nome.split(' ')[0])}})})});return m}
+function sug(){const e=S.emps.find(x=>x.id==cu.id),pr=periods(e).find(x=>x.s==cu.s),b=busy(e.emp,e.id),own={};let from=add(today,31);if(from<add(pr.f,1))from=add(pr.f,1);
+[...$('fr').children].forEach(r=>{const n=+r.children[1].value;if(!n)return;let d=from,t=0;while(t++<700){let ok=1;for(let j=0;j<n;j++){const q=add(d,j);if(b[q]||own[q]){ok=0;break}}if(ok)break;d=add(d,1)}
+r.children[0].value=d;for(let j=0;j<n;j++)own[add(d,j)]=1;from=add(d,n+30)});
+$('er').textContent='Sugestão: primeiras datas livres na loja, com 30 dias de aviso. Ajuste se precisar.';est()}
+function est(){const sl=+$('sal').value,el=$('est');if(!sl){el.textContent='';return}const g=[...$('fr').children].reduce((a,r)=>a+(+r.children[1].value||0),0),f=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+el.textContent='Férias '+g+' d: '+f(sl/30*g*4/3)+($('ab').checked?' · Abono 10 d: '+f(sl/30*10*4/3):'')+' (salário base + 1/3, sem médias nem descontos)'}
+const _pre=preset;preset=function(){_pre();est()};
+function sai(id,v){S.emps.find(e=>e.id==id).sai=v||'';persist();render()}
+function prn(id,s,i){const e=S.emps.find(x=>x.id==id),r=S.reg[id+'|'+s],x=r.gozos[i],f=add(x.ini,x.dias-1),pr=periods(e).find(q=>q.s==s);
+$('dpb').innerHTML=`<h2 style="margin:0 0 8px">Aviso e Recibo de Férias</h2><p><b>Empresa:</b> ${e.emp}</p><p><b>Empregado(a):</b> ${e.nome}</p><p>Nos termos dos arts. 134 e 135 da CLT, comunicamos que suas férias do período aquisitivo de ${br(s)} a ${br(pr.f)} serão gozadas de <b>${br(x.ini)}</b> a <b>${br(f)}</b> (${x.dias} dias), com retorno ao trabalho em <b>${br(add(f,1))}</b>.</p>${r.abono?'<p>Foi concedido o abono pecuniário de 10 dias, a pedido do empregado(a).</p>':''}<p>Aviso entregue até ${br(add(x.ini,-30))}. Pagamento das férias até ${br(add(x.ini,-2))}.</p><br><p>Data: ____/____/______</p><p>Empregador: ______________________________</p><p>Empregado(a): _____________________________</p>`;$('dp').showModal()}
+function tog(id,s,i){const x=S.reg[id+'|'+s].gozos[i];x.ok=!x.ok;persist();render()}
+function msg(t){const m=$('toast');m.textContent=t;m.hidden=false;clearTimeout(msg.t);msg.t=setTimeout(()=>m.hidden=true,4000)}
+let cb=null;
+function ask(t,f,ok){$('dct').textContent=t;cb=f;$('dcy').textContent=ok||'Confirmar';$('dc').showModal()}
+function openS(k){const T=['Férias vencidas','Vencem em até 60 dias','No prazo'],L=LS[k].slice().sort((a,b)=>a.p.c<b.p.c?-1:1);
+$('dst').textContent=T[k]+' ('+L.length+')';
+$('dsb').innerHTML=(k==0&&L.length?'<p class="mu" style="margin:0 0 6px">Férias concedidas após o prazo podem gerar pagamento em dobro. Marque o quanto antes.</p>':'')+(L.length?L.map(o=>`<div class="pr"><b>${o.e.nome}</b> <span class="mu">· ${o.e.emp}</span><div class="mu">Período ${br(o.p.s)} a ${br(o.p.f)} · saldo ${o.sd} dia(s)<br>Conceder até <b>${br(o.p.c)}</b> — <span class="${o.st.c}">${o.st.t}</span></div><button style="margin-top:6px" onclick="$('ds').close();openR('${o.e.id}','${o.p.s}')">Registrar férias</button></div>`).join(''):'<p class="mu">Ninguém nesta situação.</p>');
+$('ds').showModal()}
+let cu=null;
+function openR(id,s){cu={id,s};$('er').textContent='';$('sal').value=S.emps.find(x=>x.id==id).sal||'';const e=S.emps.find(x=>x.id==id);$('dt').textContent=e.nome+' — saldo '+saldo(id,{s})+' dias';$('md').value='30';$('ab').checked=false;preset();preset();dg.showModal()}
+function frow(i,d,n){return `<div class="fr"><input type="date" value="${d||''}" style="flex:1"><input type="number" min="1" max="30" value="${n||''}" style="width:70px" placeholder="dias"></div>`}
+function preset(){const m=$('md').value;const P={'30':[30],'15':[15,15],'ab':[14,6],'c':[10]}[m];$('ab').checked=m=='ab';$('fr').innerHTML=P.map(n=>frow(0,'',n)).join('')}
+function addF(){$('fr').insertAdjacentHTML('beforeend',frow(0,'',''));$('md').value='c'}
+function save(f){const p={s:cu.s},id=cu.id,r=rg(id,cu.s),E=t=>{$('er').textContent=t};
+const fs=[...$('fr').children].map(d=>({ini:d.children[0].value,dias:+d.children[1].value})).filter(x=>x.dias>0);
+const ab=$('ab').checked?10:0,novo=fs.reduce((a,x)=>a+x.dias,0)+ab,sd=saldo(id,p);
+if(ab&&r.abono)return E('Este período já tem abono registrado.');
+if(!novo)return E('Informe ao menos uma fração com dias.');
+if(novo>sd)return E('Total ('+novo+' dias) maior que o saldo ('+sd+').');
+const all=[...r.gozos,...fs];
+if(all.length>3)return E('A CLT permite no máximo 3 períodos.');
+if(all.some(x=>x.dias<5))return E('Nenhuma fração pode ter menos de 5 dias.');
+if(!f){const w=[],pr=periods(S.emps.find(x=>x.id==id)).find(x=>x.s==cu.s);
+if(fs.some(x=>!x.ini))w.push('Há fração sem data de início (ela não aparecerá no calendário).');
+if(sd-novo==0&&!all.some(x=>x.dias>=14))w.push('Nenhuma fração tem 14 dias ou mais (exigido pela CLT).');
+if(fs.some(x=>x.ini&&x.ini>pr.c))w.push('Alguma fração começa depois do "conceder até" ('+br(pr.c)+'): pode gerar pagamento em dobro.');
+const oc=busy(S.emps.find(x=>x.id==id).emp,id);
+fs.forEach(x=>{if(!x.ini)return;const cf=[];for(let j=0;j<x.dias;j++)(oc[add(x.ini,j)]||[]).forEach(n=>cf.includes(n)||cf.push(n));if(cf.length)w.push('Conflito na loja: '+cf.join(', ')+' também está de férias em parte de '+br(x.ini)+' a '+br(add(x.ini,x.dias-1))+'.')});
+if(w.length)return ask(w.join('\n\n')+'\n\nSalvar mesmo assim?',()=>save(true),'Salvar mesmo assim')}
+const sl=+$('sal').value;if(sl)S.emps.find(x=>x.id==id).sal=sl;S.reg[id+'|'+cu.s]={abono:r.abono+ab,gozos:all};const d=fs.find(x=>x.ini);if(d)cy=+d.ini.slice(0,4);persist();dg.close();render()}
+function delG(id,s,i){ask('Remover este registro de férias?',()=>{S.reg[id+'|'+s].gozos.splice(i,1);persist();render()},'Remover')}
+function delAb(id,s){ask('Remover o abono?',()=>{S.reg[id+'|'+s].abono=0;persist();render()},'Remover')}
+function delE(id){ask('Remover este funcionário e todos os registros de férias dele?',()=>{S.emps=S.emps.filter(e=>e.id!=id);Object.keys(S.reg).forEach(k=>{if(k.split('|')[0]==id)delete S.reg[k]});persist();render()},'Remover')}
+function openE(){$('er2').textContent='';['ee','en','ea','ei'].forEach(i=>$(i).value='');de.showModal()}
+function saveE(){const v=i=>$(i).value.trim();if(!v('ee')||!v('en')||!v('ea')||!v('ei')){$('er2').textContent='Preencha todos os campos.';return}
+S.emps.push({id:'e'+Date.now(),emp:v('ee'),nome:v('en'),adm:v('ea'),ini:v('ei'),ci:Math.max(-1,...S.emps.map(e=>e.ci||0))+1});persist();de.close();render()}
+let DLF=null;try{window.claude&&claude.use&&claude.use('downloads').then(x=>{DLF=x}).catch(()=>{})}catch(e){}
+async function exp(){const j=JSON.stringify(S),n='ferias-backup.json';if(DLF){try{await DLF.save({filename:n,data:j});msg('Backup salvo.')}catch(e){if(!e||e.code!=='declined')msg('Não foi possível salvar o backup.')}return}
+const b=new Blob([j],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+$('imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.emps)throw 0;S=d;persist();render()}catch(x){msg('Arquivo inválido.')}};r.readAsText(f)};
+render();
+</script>
+
+</body></html>

@@ -1,0 +1,66 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Gestão da Ótica</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: página inicial com dois acessos grandes (Financeiro e Férias), cada um com a lista do que tem dentro. */
+:root{--bg:#eef1f6;--sf:#fff;--ink:#14213a;--mu:#5b6882;--ln:#dbe1ec;--fin:#244fa8;--finb:#e4ecfb;--fer:#1a7f6b;--ferb:#e0f3ee;--acx:#fff;
+--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1320;--sf:#141d2e;--ink:#e6ebf5;--mu:#9aa8c2;--ln:#25314a;--fin:#7fa3ff;--finb:#16264a;--fer:#4fd1b3;--ferb:#0f2e28;--acx:#0b1a38;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c1320;--sf:#141d2e;--ink:#e6ebf5;--mu:#9aa8c2;--ln:#25314a;--fin:#7fa3ff;--finb:#16264a;--fer:#4fd1b3;--ferb:#0f2e28;--acx:#0b1a38;color-scheme:dark}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);padding-block:40px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:6px}
+h1{font-size:clamp(26px,5vw,36px);line-height:1.15;font-weight:600;letter-spacing:-.4px;margin:0;text-wrap:balance}
+.sub{color:var(--mu);margin:0;max-width:52ch}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:680px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{display:flex;flex-direction:column;gap:16px;background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:22px;min-width:0}
+.tag{align-self:flex-start;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:99px}
+.fin .tag{background:var(--finb);color:var(--fin)}.fer .tag{background:var(--ferb);color:var(--fer)}
+h2{font-size:22px;font-weight:600;margin:0;letter-spacing:-.2px}
+.card p{margin:0;color:var(--mu);font-size:15px}
+ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px}
+li a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:15px;min-height:44px}
+li a:hover{background:var(--bg)}
+li a span:last-child{color:var(--mu);font-size:13px}
+.go{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:8px;font-weight:600;text-decoration:none;color:var(--acx);margin-top:auto}
+.fin .go{background:var(--fin)}.fer .go{background:var(--fer)}
+a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.go:hover{filter:brightness(1.08)}
+.note{font-size:13px;color:var(--mu);margin:0;max-width:70ch}
+</style>
+<main>
+<header>
+<h1>Gestão da Ótica</h1>
+<p class="sub">Escolha a área que você quer abrir.</p>
+</header>
+<div class="grid">
+<section class="card fin" aria-labelledby="t1">
+<span class="tag">Financeiro</span>
+<h2 id="t1">Caixa e pagamentos</h2>
+<p>Confere o que a Stone recebeu com o que foi lançado no Ssotica, por dia e por mês, e controla as contas pagas.</p>
+<ul>
+<li><a href="financeiro/"><span>Painel e conferência</span><span>Stone × Ssotica</span></a></li>
+<li><a href="financeiro/"><span>Entradas: Pix, cartão e Mumbuca</span><span>diário e mensal</span></a></li>
+<li><a href="financeiro/"><span>Contas pagas</span><span>despesas</span></a></li>
+</ul>
+<a class="go" href="financeiro/">Abrir Financeiro →</a>
+</section>
+<section class="card fer" aria-labelledby="t2">
+<span class="tag">Férias</span>
+<h2 id="t2">Controle de férias</h2>
+<p>Pedidos de férias dos funcionários com aprovação, em fases, e relatório por funcionário.</p>
+<ul>
+<li><a href="ferias/"><span>Quadro de aprovação</span><span>por fases</span></a></li>
+<li><a href="ferias/"><span>Novo pedido de férias</span><span>início e fim</span></a></li>
+<li><a href="ferias/"><span>Relatórios</span><span>tabela e gráfico</span></a></li>
+</ul>
+<a class="go" href="ferias/">Abrir Férias →</a>
+</section>
+</div>
+<p class="note">Cada área guarda os próprios dados neste navegador. Use o backup de cada uma para levar os dados a outro aparelho. Para acrescentar outra área depois, é só incluir mais um cartão aqui.</p>
+</main>
+
+</body></html>
