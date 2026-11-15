@@ -12,8 +12,14 @@ Site de um arquivo só (`index.html`), sem instalação. A página inicial leva 
 2. Settings > Pages > Deploy from a branch > `main` / `(root)` > Save.
 3. Em 1 a 2 minutos o site abre em `https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/`.
 
+## Dados na nuvem (Supabase)
+
+- Os dados de Caixas, Férias e Escala são salvos no Supabase (projeto `gestao-otica`) e carregados ao entrar. É preciso fazer login com e-mail e senha.
+- Só entra quem está na tabela `membros` (botão Conta > Equipe, para o administrador). Papéis: administrador, editor e leitor.
+- A chave que está no `index.html` é a chave pública (publishable). Quem protege os dados é o login junto com as regras de acesso (RLS) do banco. Nunca coloque a chave secreta (service role) no site.
+- Ao entrar num aparelho com dados antigos no navegador, o que está na nuvem prevalece e a cópia local fica guardada como `<chave>__bkp_local`.
+
 ## Importante
 
-- Os dados de cada área ficam salvos no navegador de cada aparelho. Use o backup de cada área para levar a outro aparelho.
-- A escala de trabalho no site não é compartilhada com a equipe: quem abre vê os próprios dados.
 - A leitura de fotos (JPG) no Caixas só funciona dentro do Claude. PDF e Excel funcionam normalmente.
+- Se dois aparelhos editarem a mesma área ao mesmo tempo, vale o último a salvar. Um aviso aparece quando há dados novos de outro aparelho.
