@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gestão da Ótica</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: página inicial com três acessos; dentro de cada área, barra fina com voltar e troca rápida entre as áreas. */
+:root{--bg:#eef1f6;--sf:#fff;--ink:#14213a;--mu:#5b6882;--ln:#dbe1ec;--acx:#fff;
+--cx:#244fa8;--cxb:#e4ecfb;--fe:#1a7f6b;--feb:#e0f3ee;--es:#a85a05;--esb:#fcebd6;
+--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1320;--sf:#141d2e;--ink:#e6ebf5;--mu:#9aa8c2;--ln:#25314a;--acx:#0b1a38;--cx:#7fa3ff;--cxb:#16264a;--fe:#4fd1b3;--feb:#0f2e28;--es:#f0a24f;--esb:#3a2a12;color-scheme:dark}}
+*,*:before,*:after{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans)}
+[hidden]{display:none!important}
+#home{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:28px;padding-block:44px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:clamp(26px,5vw,36px);line-height:1.15;font-weight:600;letter-spacing:-.4px;margin:0;text-wrap:balance}
+.sub{color:var(--mu);margin:6px 0 0}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{display:flex;flex-direction:column;gap:14px;background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:22px;min-width:0;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+.card:hover{transform:translateY(-2px)}
+.tag{align-self:flex-start;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:99px}
+.cx .tag{background:var(--cxb);color:var(--cx)}.fe .tag{background:var(--feb);color:var(--fe)}.es .tag{background:var(--esb);color:var(--es)}
+.cx:hover{border-color:var(--cx)}.fe:hover{border-color:var(--fe)}.es:hover{border-color:var(--es)}
+.card h2{font-size:22px;font-weight:600;margin:0;letter-spacing:-.2px}
+.card p{margin:0;color:var(--mu);font-size:15px;flex:1}
+.go{display:flex;align-items:center;justify-content:center;min-height:46px;border-radius:8px;font-weight:600;color:var(--acx)}
+.cx .go{background:var(--cx)}.fe .go{background:var(--fe)}.es .go{background:var(--es)}
+.note{font-size:13px;color:var(--mu);margin:0;max-width:72ch}
+a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#bar{position:fixed;top:0;left:0;right:0;z-index:10;height:calc(52px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);background:var(--sf);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:10px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));overflow-x:auto}
+#bar button{flex:none;font:inherit;font-size:14px;font-weight:500;min-height:38px;padding:0 14px;border:1px solid var(--ln);border-radius:8px;background:var(--sf);color:var(--ink);cursor:pointer}
+#bar button:hover{background:var(--bg)}
+#bar .sp{flex:1;min-width:0}
+#bar .tabs{display:flex;gap:4px}
+#bar .tabs button{border-color:transparent;color:var(--mu)}
+#bar .tabs button[aria-current="true"]{background:var(--bg);color:var(--ink);border-color:var(--ln);font-weight:600}
+#mods{position:fixed;left:0;right:0;bottom:0;top:calc(52px + env(safe-area-inset-top,0px))}
+#mods iframe{width:100%;height:100%;border:0;display:block;background:var(--bg)}
+
+#auth,#eq{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+#auth[hidden],#eq[hidden]{display:none!important}
+.box{width:100%;max-width:400px;background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.box h2{margin:0;font-size:20px;font-weight:600}.box p{margin:0;color:var(--mu);font-size:14px}
+.box label{font-size:13px;color:var(--mu);display:block;margin-bottom:3px}
+.box input,.box select{font:inherit;width:100%;padding:10px;border:1px solid var(--ln);border-radius:8px;background:var(--bg);color:var(--ink)}
+.box button,#ub button,#nv button{font:inherit;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);cursor:pointer}
+.box button.pri{background:var(--cx);color:var(--acx);border-color:var(--cx);font-weight:600}
+.box .err{color:#b3342b;font-size:13px;min-height:1em}.box .lk{background:none;border:0;color:var(--cx);min-height:32px;padding:0;text-align:left}
+.mem{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--ln);font-size:14px;overflow-wrap:anywhere}
+#ub{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+#ub .pill{display:flex;gap:8px;align-items:center;background:var(--sf);border:1px solid var(--ln);border-radius:99px;padding:4px 6px 4px 12px;font-size:12px;color:var(--mu);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+#ub .pill button{min-height:30px;border-radius:99px;font-size:12px;padding:0 10px}
+#ub .pn{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.12);max-width:260px;overflow-wrap:anywhere}
+#ub .pn[hidden]{display:none}
+#nv{position:fixed;left:50%;transform:translateX(-50%);top:calc(60px + env(safe-area-inset-top,0px));z-index:60;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;display:flex;gap:10px;align-items:center;font-size:14px;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+#nv[hidden]{display:none}#nv button{min-height:32px;background:var(--bg);color:var(--ink)}
+</style></head><body>
+<div id="auth" hidden><form class="box" id="af" autocomplete="on"><h2>Gestão da Ótica</h2><p id="at">Entre para ver e salvar os dados na nuvem.</p>
+<div><label for="ae">E-mail</label><input id="ae" type="email" required autocomplete="username"></div>
+<div><label for="ap">Senha</label><input id="ap" type="password" required minlength="6" autocomplete="current-password"></div>
+<div class="err" id="aer" role="alert"></div><button class="pri" id="ab" type="submit">Entrar</button>
+<button class="lk" id="at2" type="button">Primeiro acesso? Criar conta</button><button class="lk" id="afg" type="button">Esqueci a senha</button></form>
+<div class="box" id="ax" hidden><h2 id="axt">Sem acesso</h2><p id="axp"></p><div class="err" id="axe" role="alert"></div><button class="pri" id="axa" type="button" hidden>Sou o administrador (primeiro acesso)</button><button id="axs" type="button">Sair</button></div></div>
+<div id="eq" hidden><div class="box" style="max-width:520px"><h2>Equipe</h2><p>Quem pode entrar. Leitor só consulta; editor também altera; administrador também gerencia a equipe.</p><div id="el"></div>
+<div><label for="ee">Adicionar e-mail</label><input id="ee" type="email"></div><div><label for="ep">Papel</label><select id="ep"><option value="editor">Editor</option><option value="leitor">Leitor</option><option value="admin">Administrador</option></select></div>
+<div class="err" id="eer" role="alert"></div><button class="pri" id="ead" type="button">Adicionar</button><button id="ecl" type="button">Fechar</button></div></div>
+<div id="ub" hidden><div class="pn" id="upn" hidden><b id="uem"></b><span id="upp"></span><button id="ueq" type="button" hidden>Equipe</button><button id="uso" type="button">Sair</button></div><div class="pill"><span id="ust">●</span><button id="ucn" type="button">Conta</button></div></div>
+<div id="nv" hidden><span>Há dados novos salvos de outro aparelho.</span><button id="nva" type="button">Atualizar</button></div>
+
+<main id="home">
+<header><h1>Gestão da Ótica</h1><p class="sub">Escolha em qual área você quer entrar.</p></header>
+<div class="grid">
+<a class="card cx" href="#caixa"><span class="tag">Caixas</span><h2>Caixas e pagamentos</h2><p>Confere o que a Stone recebeu com o que foi lançado no Ssotica, por dia e por mês: Pix, cartões, Mumbuca e contas pagas.</p><span class="go">Entrar em Caixas →</span></a>
+<a class="card fe" href="#ferias"><span class="tag">Férias</span><h2>Controle de férias</h2><p>Prazos pela CLT, férias agendadas, avisos da semana, calendário anual e aviso e recibo para imprimir.</p><span class="go">Entrar em Férias →</span></a>
+<a class="card es" href="#escala"><span class="tag">Escala</span><h2>Escala de trabalho</h2><p>Escala mensal montada pela carga horária semanal de cada funcionário, com feriados e folgas.</p><span class="go">Entrar em Escala →</span></a>
+</div>
+<p class="note">Os dados ficam salvos na nuvem e aparecem em todos os aparelhos em que você entrar com seu e-mail.</p>
+</main>
+<header id="bar" hidden><button type="button" id="bk">← Início</button><span class="tabs" role="tablist"><button type="button" data-m="caixa">Caixas</button><button type="button" data-m="ferias">Férias</button><button type="button" data-m="escala">Escala</button></span><span class="sp"></span></header>
+<div id="mods" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>

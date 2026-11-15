@@ -12,6 +12,12 @@ Site de um arquivo só (`index.html`), sem instalação. A página inicial leva 
 2. Settings > Pages > Deploy from a branch > `main` / `(root)` > Save.
 3. Em 1 a 2 minutos o site abre em `https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/`.
 
+## Estrutura do código
+
+- `src/caixa.html`, `src/ferias.html`, `src/escala.html`: as três áreas. `src/shell_*.txt`: página inicial, login e nuvem.
+- Depois de editar um arquivo em `src/`, rode `python3 build.py` para gerar o `index.html` que vai ao ar.
+- A Escala tem uma escala por loja. Funcionários e férias vêm da área Férias (a origem). Quem marca férias em Férias já aparece de férias na Escala.
+
 ## Dados na nuvem (Supabase)
 
 - Os dados de Caixas, Férias e Escala são salvos no Supabase (projeto `gestao-otica`) e carregados ao entrar. É preciso fazer login com e-mail e senha.
