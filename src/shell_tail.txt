@@ -15,8 +15,9 @@ addEventListener('hashchange',show);
 /* ---- nuvem (Supabase): login, gravação e leitura dos dados das três áreas ---- */
 const SB_URL='https://ooukbqwjeayvbaferreq.supabase.co',SB_KEY='sb_publishable_gsCmkJo5g65pHltG73u6Hw_vICrtKau';
 const SYNC=['pag1','pag2','pag3','pag5','ferias_v2','escala-loja-v1'];window.__SYNCKEYS=SYNC;
-const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-let papel=null,meuEmail='',known={},timers={},pend={},mode='in',onReady=null,pollT=null;
+const kaFetch=(u,o)=>{try{if(o&&typeof o.body==='string'&&o.body.length<60000)return fetch(u,{...o,keepalive:true})}catch(e){}return fetch(u,o)};
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true},global:{fetch:kaFetch}});
+let papel=null,meuEmail='',known={},raw={},timers={},pend={},mode='in',onReady=null,pollT=null;
 const $i=id=>document.getElementById(id),ts=v=>Date.parse(v)||0;
 const parseV=v=>{try{return JSON.parse(v)}catch(e){return{_t:String(v)}}};
 const unparse=j=>j&&typeof j==='object'&&!Array.isArray(j)&&Object.keys(j).length===1&&'_t' in j?j._t:JSON.stringify(j);
@@ -24,13 +25,19 @@ function st(t,c){const e=$i('ust');e.title=t;e.style.color=c||'';e.textContent='
 async function pull(){const{data,error}=await sb.from('dados').select('chave,valor,atualizado_em').in('chave',SYNC);if(error)throw error;
 const rem=new Map((data||[]).map(r=>[r.chave,r]));let n=0;
 for(const k of SYNC){const r=rem.get(k),loc=localStorage.getItem(k);
-if(r){const s=unparse(r.valor);if(loc&&loc!==s){try{localStorage.setItem(k+'__bkp_local',loc)}catch(e){}}try{localStorage.setItem(k,s)}catch(e){}known[k]=ts(r.atualizado_em);n++}
+if(r){const s=unparse(r.valor);if(loc&&loc!==s){try{localStorage.setItem(k+'__bkp_local',loc)}catch(e){}}try{localStorage.setItem(k,s)}catch(e){}known[k]=ts(r.atualizado_em);raw[k]=r.atualizado_em;n++}
 else if(loc&&papel!=='leitor'){await push(k,loc)}}
 return n}
-async function push(k,v){const t=new Date().toISOString(),{error}=await sb.from('dados').upsert({chave:k,valor:parseV(v),atualizado_em:t,atualizado_por:meuEmail});if(error)throw error;known[k]=ts(t)}
+function conflict(k){delete pend[k];clearTimeout(timers[k]);st('conflito: há dados novos de outro aparelho','#b3342b');$i('nv').hidden=false}
+async function push(k,v){const val=parseV(v),t=new Date().toISOString();let r;
+if(raw[k])r=await sb.from('dados').update({valor:val,atualizado_em:t,atualizado_por:meuEmail}).eq('chave',k).eq('atualizado_em',raw[k]).select('atualizado_em');
+else r=await sb.from('dados').insert({chave:k,valor:val,atualizado_em:t,atualizado_por:meuEmail}).select('atualizado_em');
+if(r.error){if(/duplicate|23505/.test((r.error.message||'')+(r.error.code||''))){conflict(k);return}throw r.error}
+if(!r.data||!r.data.length){conflict(k);return}
+raw[k]=r.data[0].atualizado_em;known[k]=ts(raw[k])}
 window.__cloudSet=(k,v)=>{if(papel==null)return;if(papel==='leitor'){st('somente leitura','#a85a05');return}pend[k]=v;st('salvando…','#a85a05');clearTimeout(timers[k]);timers[k]=setTimeout(()=>flush(k),1200)};
 async function flush(k){if(!(k in pend))return;const v=pend[k];delete pend[k];clearTimeout(timers[k]);
-try{await push(k,v);if(!Object.keys(pend).length)st('salvo na nuvem','#1a7f4b')}catch(e){pend[k]=pend[k]??v;st('erro ao salvar: '+(e.message||e),'#b3342b');timers[k]=setTimeout(()=>flush(k),15000)}}
+try{await push(k,v);if(!Object.keys(pend).length&&$i('nv').hidden)st('salvo na nuvem','#1a7f4b')}catch(e){pend[k]=pend[k]??v;st('erro ao salvar: '+(e.message||e),'#b3342b');timers[k]=setTimeout(()=>flush(k),15000)}}
 const flushAll=()=>Object.keys(pend).forEach(flush);
 async function checkNew(){if(papel==null||Object.keys(pend).length)return;
 try{const{data}=await sb.from('dados').select('chave,atualizado_em').in('chave',SYNC);

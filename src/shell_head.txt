@@ -66,7 +66,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset
 <div><label for="ee">Adicionar e-mail</label><input id="ee" type="email"></div><div><label for="ep">Papel</label><select id="ep"><option value="editor">Editor</option><option value="leitor">Leitor</option><option value="admin">Administrador</option></select></div>
 <div class="err" id="eer" role="alert"></div><button class="pri" id="ead" type="button">Adicionar</button><button id="ecl" type="button">Fechar</button></div></div>
 <div id="ub" hidden><div class="pn" id="upn" hidden><b id="uem"></b><span id="upp"></span><button id="ueq" type="button" hidden>Equipe</button><button id="uso" type="button">Sair</button></div><div class="pill"><span id="ust">●</span><button id="ucn" type="button">Conta</button></div></div>
-<div id="nv" hidden><span>Há dados novos salvos de outro aparelho.</span><button id="nva" type="button">Atualizar</button></div>
+<div id="nv" hidden><span>Há dados mais novos salvos em outro aparelho. Atualize para ver; o que você digitou aqui antes fica guardado como cópia.</span><button id="nva" type="button">Atualizar</button></div>
 
 <main id="home">
 <header><h1>Gestão da Ótica</h1><p class="sub">Escolha em qual área você quer entrar.</p></header>
