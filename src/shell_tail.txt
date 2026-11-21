@@ -1,7 +1,7 @@
 
 const NAMES={caixa:'Caixas',ferias:'Férias',escala:'Escala de trabalho',tabelas:'Tabelas de lentes'},EXT={tabelas:'tabelas/index.html'},frames={};
 const $=s=>document.querySelector(s);
-function show(){if(typeof papel==='undefined'||papel==null)return;const m=(MODS[location.hash.slice(1)]||EXT[location.hash.slice(1)])?location.hash.slice(1):'';
+function show(){if(typeof papel==='undefined'||papel==null)return;const m=(MODS[location.hash.slice(1)]||EXT[location.hash.slice(1)])?location.hash.slice(1):'';if(m==='caixa'&&papel!=='admin'){location.hash='';return}
 $('#home').hidden=!!m;$('#bar').hidden=!m;$('#mods').hidden=!m;
 document.title=(m?NAMES[m]+' · ':'')+'Gestão da Ótica';
 if(!m){window.scrollTo(0,0);return}
@@ -66,7 +66,7 @@ const{data,error}=await sb.from('membros').select('papel').eq('email',meuEmail).
 if(error){$i('af').hidden=true;$i('ax').hidden=false;$i('axt').textContent='Erro';$i('axp').textContent=error.message;return}
 if(!data){$i('ax').hidden=false;$i('axt').textContent='Sem acesso';$i('axp').textContent=meuEmail+' ainda não foi liberado. Peça ao administrador para adicionar este e-mail na Equipe.';$i('axa').hidden=false;
 $i('axa').onclick=async()=>{const{error}=await sb.from('membros').insert({email:meuEmail,papel:'admin'});if(error){$i('axe').textContent='Já existe um administrador. Peça acesso a ele.';$i('axa').hidden=true}else{$i('axe').textContent='';enter()}};return}
-papel=data.papel;window.__papel=papel;st('carregando…');$i('ub').hidden=false;
+papel=data.papel;window.__papel=papel;document.querySelectorAll('[href="#caixa"],[data-m="caixa"]').forEach(e=>e.hidden=papel!=='admin');st('carregando…');$i('ub').hidden=false;
 try{await pull()}catch(e){papel=null;$i('ax').hidden=false;$i('axt').textContent='Erro ao carregar';$i('axp').textContent=e.message;return}
 $i('uem').textContent=meuEmail;$i('upp').textContent={admin:'Administrador',editor:'Editor',leitor:'Leitor (somente consulta)'}[papel];$i('ueq').hidden=papel!=='admin';
 st(papel==='leitor'?'somente leitura':'salvo na nuvem',papel==='leitor'?'#a85a05':'#1a7f4b');$i('auth').hidden=true;
