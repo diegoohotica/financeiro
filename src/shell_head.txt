@@ -12,6 +12,9 @@
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans)}
 [hidden]{display:none!important}
+#lg{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:55;font:inherit;font-size:14px;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+body.pub .card.cx,body.pub .card.es,body.pub a.card.fe:not(.cp),body.pub .note,body.pub #bar [data-m="caixa"],body.pub #bar [data-m="ferias"],body.pub #bar [data-m="escala"]{display:none!important}
+body:not(.pub) .cp,body:not(.pub) #bar [data-m="publico"]{display:none!important}
 #home{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:28px;padding-block:44px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 h1{font-size:clamp(26px,5vw,36px);line-height:1.15;font-weight:600;letter-spacing:-.4px;margin:0;text-wrap:balance}
 .sub{color:var(--mu);margin:6px 0 0}
@@ -61,11 +64,12 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset
 <div><label for="ae">E-mail</label><input id="ae" type="email" required autocomplete="username"></div>
 <div><label for="ap">Senha</label><input id="ap" type="password" required minlength="6" autocomplete="current-password"></div>
 <div class="err" id="aer" role="alert"></div><button class="pri" id="ab" type="submit">Entrar</button>
-<button class="lk" id="at2" type="button">Primeiro acesso? Criar conta</button><button class="lk" id="afg" type="button">Esqueci a senha</button></form>
+<button class="lk" id="at2" type="button">Primeiro acesso? Criar conta</button><button class="lk" id="afg" type="button">Esqueci a senha</button><button class="lk" id="acx" type="button" hidden>Voltar</button></form>
 <div class="box" id="ax" hidden><h2 id="axt">Sem acesso</h2><p id="axp"></p><div class="err" id="axe" role="alert"></div><button class="pri" id="axa" type="button" hidden>Sou o administrador (primeiro acesso)</button><button id="axs" type="button">Sair</button></div></div>
 <div id="eq" hidden><div class="box" style="max-width:520px"><h2>Equipe</h2><p>Quem pode entrar. Leitor só consulta; editor também altera; administrador também gerencia a equipe.</p><div id="el"></div>
 <div><label for="ee">Adicionar e-mail</label><input id="ee" type="email"></div><div><label for="ep">Papel</label><select id="ep"><option value="leitor">Leitor</option><option value="editor">Editor</option><option value="admin">Administrador</option></select></div>
 <div class="err" id="eer" role="alert"></div><button class="pri" id="ead" type="button">Adicionar</button><button id="ecl" type="button">Fechar</button></div></div>
+<button id="lg" type="button" hidden>Entrar</button>
 <div id="ub" hidden><div class="pn" id="upn" hidden><b id="uem"></b><span id="upp"></span><button id="ueq" type="button" hidden>Equipe</button><button id="uso" type="button">Sair</button></div><div class="pill"><span id="ust">●</span><button id="ucn" type="button">Conta</button></div></div>
 <div id="nv" hidden><span>Há dados mais novos salvos em outro aparelho. Atualize para ver; o que você digitou aqui antes fica guardado como cópia.</span><button id="nva" type="button">Atualizar</button></div>
 
@@ -76,10 +80,11 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset
 <a class="card fe" href="#ferias"><span class="tag">Férias</span><h2>Controle de férias</h2><p>Prazos pela CLT, férias agendadas, avisos da semana, calendário anual e aviso e recibo para imprimir.</p><span class="go">Entrar em Férias →</span></a>
 <a class="card es" href="#escala"><span class="tag">Escala</span><h2>Escala de trabalho</h2><p>Escala mensal montada pela carga horária semanal de cada funcionário, com feriados e folgas.</p><span class="go">Entrar em Escala →</span></a>
 <a class="card le" href="#tabelas"><span class="tag">Tabelas</span><h2>Tabelas de lentes</h2><p>Buscador de preços sugeridos de lentes por grau, comparação e orçamento, com favoritos e orçamentos salvos na nuvem.</p><span class="go">Entrar em Tabelas →</span></a>
+<a class="card fe cp" href="#publico"><span class="tag">Férias</span><h2>Calendário de férias</h2><p>Veja quem está de férias hoje, quem sai nos próximos dias e o calendário do ano, por loja.</p><span class="go">Ver calendário →</span></a>
 </div>
 <p class="note">Os dados ficam salvos na nuvem e aparecem em todos os aparelhos em que você entrar com seu e-mail.</p>
 </main>
-<header id="bar" hidden><button type="button" id="bk">← Início</button><span class="tabs" role="tablist"><button type="button" data-m="caixa">Caixas</button><button type="button" data-m="ferias">Férias</button><button type="button" data-m="escala">Escala</button><button type="button" data-m="tabelas">Tabelas</button></span><span class="sp"></span></header>
+<header id="bar" hidden><button type="button" id="bk">← Início</button><span class="tabs" role="tablist"><button type="button" data-m="caixa">Caixas</button><button type="button" data-m="ferias">Férias</button><button type="button" data-m="escala">Escala</button><button type="button" data-m="tabelas">Tabelas</button><button type="button" data-m="publico">Calendário de férias</button></span><span class="sp"></span></header>
 <div id="mods" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>

@@ -1,7 +1,7 @@
 
-const NAMES={caixa:'Caixas',ferias:'Férias',escala:'Escala de trabalho',tabelas:'Tabelas de lentes'},EXT={tabelas:'tabelas/index.html'},frames={};
+const NAMES={caixa:'Caixas',ferias:'Férias',escala:'Escala de trabalho',tabelas:'Tabelas de lentes',publico:'Calendário de férias'},EXT={tabelas:'tabelas/index.html'},frames={};
 const $=s=>document.querySelector(s);
-function show(){if(typeof papel==='undefined'||papel==null)return;const m=(MODS[location.hash.slice(1)]||EXT[location.hash.slice(1)])?location.hash.slice(1):'';if(m==='caixa'&&papel!=='admin'){location.hash='';return}
+function show(){if(typeof papel==='undefined'||(papel==null&&!pub))return;const m=(MODS[location.hash.slice(1)]||EXT[location.hash.slice(1)])?location.hash.slice(1):'';if(pub&&m&&m!=='publico'&&m!=='tabelas'){location.hash='';return}
 $('#home').hidden=!!m;$('#bar').hidden=!m;$('#mods').hidden=!m;
 document.title=(m?NAMES[m]+' · ':'')+'Gestão da Ótica';
 if(!m){window.scrollTo(0,0);return}
@@ -19,7 +19,7 @@ const SB_URL='https://ooukbqwjeayvbaferreq.supabase.co',SB_KEY='sb_publishable_g
 const SYNC=['pag1','pag2','pag3','pag5','ferias_v2','escala-loja-v1','otica_fav','otica_orc','otica_rec'];window.__SYNCKEYS=SYNC;
 const kaFetch=(u,o)=>{try{if(o&&typeof o.body==='string'&&o.body.length<60000)return fetch(u,{...o,keepalive:true})}catch(e){}return fetch(u,o)};
 const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true},global:{fetch:kaFetch}});
-let papel=null,meuEmail='',known={},raw={},timers={},pend={},mode='in',onReady=null,pollT=null;
+window.__sb=sb;let pub=false,papel=null,meuEmail='',known={},raw={},timers={},pend={},mode='in',onReady=null,pollT=null;
 const $i=id=>document.getElementById(id),ts=v=>Date.parse(v)||0;
 const parseV=v=>{try{return JSON.parse(v)}catch(e){return{_t:String(v)}}};
 const unparse=j=>j&&typeof j==='object'&&!Array.isArray(j)&&Object.keys(j).length===1&&'_t' in j?j._t:JSON.stringify(j);
@@ -57,16 +57,17 @@ $i('af').onsubmit=async ev=>{ev.preventDefault();$i('aer').textContent='';$i('ab
 try{if(mode==='up'){const{data,error}=await sb.auth.signUp({email:e,password:p});if(error)throw error;
 if(!data.session){$i('aer').style.color='#1a7f4b';$i('aer').textContent='Conta criada. Confirme pelo link enviado ao seu e-mail e depois entre.';authUI('in');$i('aer').textContent='Conta criada. Confirme pelo link enviado ao seu e-mail e depois entre.';return}}
 else{const{error}=await sb.auth.signInWithPassword({email:e,password:p});if(error)throw error}
-$i('aer').style.color='';await enter()}catch(x){$i('aer').style.color='';$i('aer').textContent=/Invalid login/i.test(x.message)?'E-mail ou senha incorretos.':/not confirmed/i.test(x.message)?'Confirme o e-mail pelo link que enviamos.':x.message}finally{$i('ab').disabled=false}};
+$i('aer').style.color='';location.reload()}catch(x){$i('aer').style.color='';$i('aer').textContent=/Invalid login/i.test(x.message)?'E-mail ou senha incorretos.':/not confirmed/i.test(x.message)?'Confirme o e-mail pelo link que enviamos.':x.message}finally{$i('ab').disabled=false}};
 async function sair(){flushAll();await sb.auth.signOut();papel=null;known={};$i('ub').hidden=true;$i('auth').hidden=false;authUI('in');SYNC.forEach(k=>{});location.hash='';location.reload()}
+$i('lg').onclick=()=>{$i('auth').hidden=false;authUI('in');$i('acx').hidden=false};$i('acx').onclick=()=>{$i('auth').hidden=true};
 $i('uso').onclick=sair;$i('axs').onclick=sair;$i('ucn').onclick=()=>{$i('upn').hidden=!$i('upn').hidden};
-async function enter(){const{data:{session}}=await sb.auth.getSession();if(!session){$i('auth').hidden=false;authUI('in');return}
+async function enter(){const{data:{session}}=await sb.auth.getSession();if(!session){pub=true;document.body.classList.add('pub');window.__papel='pub';$i('auth').hidden=true;$i('lg').hidden=false;if(onReady){const f=onReady;onReady=null;f()}return}
 meuEmail=(session.user.email||'').toLowerCase();$i('auth').hidden=false;$i('af').hidden=true;$i('ax').hidden=true;
 const{data,error}=await sb.from('membros').select('papel').eq('email',meuEmail).maybeSingle();
 if(error){$i('af').hidden=true;$i('ax').hidden=false;$i('axt').textContent='Erro';$i('axp').textContent=error.message;return}
 if(!data){$i('ax').hidden=false;$i('axt').textContent='Sem acesso';$i('axp').textContent=meuEmail+' ainda não foi liberado. Peça ao administrador para adicionar este e-mail na Equipe.';$i('axa').hidden=false;
 $i('axa').onclick=async()=>{const{error}=await sb.from('membros').insert({email:meuEmail,papel:'admin'});if(error){$i('axe').textContent='Já existe um administrador. Peça acesso a ele.';$i('axa').hidden=true}else{$i('axe').textContent='';enter()}};return}
-papel=data.papel;window.__papel=papel;document.querySelectorAll('[href="#caixa"],[data-m="caixa"]').forEach(e=>e.hidden=papel!=='admin');st('carregando…');$i('ub').hidden=false;
+papel=data.papel;window.__papel=papel;st('carregando…');$i('ub').hidden=false;
 try{await pull()}catch(e){papel=null;$i('ax').hidden=false;$i('axt').textContent='Erro ao carregar';$i('axp').textContent=e.message;return}
 $i('uem').textContent=meuEmail;$i('upp').textContent={admin:'Administrador',editor:'Editor',leitor:'Leitor (somente consulta)'}[papel];$i('ueq').hidden=papel!=='admin';
 st(papel==='leitor'?'somente leitura':'salvo na nuvem',papel==='leitor'?'#a85a05':'#1a7f4b');$i('auth').hidden=true;
