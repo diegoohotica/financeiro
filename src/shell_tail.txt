@@ -1,12 +1,14 @@
 
-const NAMES={caixa:'Caixas',ferias:'Férias',escala:'Escala de trabalho'},frames={};
+const NAMES={caixa:'Caixas',ferias:'Férias',escala:'Escala de trabalho',tabelas:'Tabelas de lentes'},EXT={tabelas:'tabelas/index.html'},frames={};
 const $=s=>document.querySelector(s);
-function show(){if(typeof papel==='undefined'||papel==null)return;const m=MODS[location.hash.slice(1)]?location.hash.slice(1):'';
+function show(){if(typeof papel==='undefined'||papel==null)return;const m=(MODS[location.hash.slice(1)]||EXT[location.hash.slice(1)])?location.hash.slice(1):'';
 $('#home').hidden=!!m;$('#bar').hidden=!m;$('#mods').hidden=!m;
 document.title=(m?NAMES[m]+' · ':'')+'Gestão da Ótica';
 if(!m){window.scrollTo(0,0);return}
 if(m==='escala'&&!frames.ferias&&!localStorage.getItem('ferias_v2')){const g=document.createElement('iframe');g.title=NAMES.ferias;g.hidden=true;g.srcdoc=MODS.ferias.replace('<body>',()=>'<body>'+SHIM);$('#mods').appendChild(g);frames.ferias=g}
-if(!frames[m]){const f=document.createElement('iframe');f.title=NAMES[m];f.srcdoc=MODS[m].replace('<body>',()=>'<body>'+SHIM);$('#mods').appendChild(f);frames[m]=f}
+if(!frames[m]){const f=document.createElement('iframe');f.title=NAMES[m];$('#mods').appendChild(f);frames[m]=f;
+if(EXT[m])fetch(EXT[m]).then(r=>r.ok?r.text():Promise.reject()).then(x=>{f.srcdoc=x.replace('<body>',()=>'<body>'+SHIM)}).catch(()=>{f.srcdoc='<p style="font:16px sans-serif;padding:24px">Não foi possível carregar esta área. Recarregue a página.</p>'});
+else f.srcdoc=MODS[m].replace('<body>',()=>'<body>'+SHIM)}
 Object.keys(frames).forEach(k=>{frames[k].hidden=k!==m});
 document.querySelectorAll('#bar .tabs button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.m===m)))}
 document.querySelectorAll('#bar .tabs button').forEach(b=>b.onclick=()=>{location.hash=b.dataset.m});
@@ -14,7 +16,7 @@ $('#bk').onclick=()=>{location.hash=''};
 addEventListener('hashchange',show);
 /* ---- nuvem (Supabase): login, gravação e leitura dos dados das três áreas ---- */
 const SB_URL='https://ooukbqwjeayvbaferreq.supabase.co',SB_KEY='sb_publishable_gsCmkJo5g65pHltG73u6Hw_vICrtKau';
-const SYNC=['pag1','pag2','pag3','pag5','ferias_v2','escala-loja-v1'];window.__SYNCKEYS=SYNC;
+const SYNC=['pag1','pag2','pag3','pag5','ferias_v2','escala-loja-v1','otica_fav','otica_orc','otica_rec'];window.__SYNCKEYS=SYNC;
 const kaFetch=(u,o)=>{try{if(o&&typeof o.body==='string'&&o.body.length<60000)return fetch(u,{...o,keepalive:true})}catch(e){}return fetch(u,o)};
 const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true},global:{fetch:kaFetch}});
 let papel=null,meuEmail='',known={},raw={},timers={},pend={},mode='in',onReady=null,pollT=null;

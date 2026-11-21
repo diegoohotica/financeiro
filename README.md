@@ -16,6 +16,7 @@ Site de um arquivo só (`index.html`), sem instalação. A página inicial leva 
 
 - `src/caixa.html`, `src/ferias.html`, `src/escala.html`: as três áreas. `src/shell_*.txt`: página inicial, login e nuvem.
 - Depois de editar um arquivo em `src/`, rode `python3 build.py` para gerar o `index.html` que vai ao ar.
+- `tabelas/index.html`: buscador de preços de lentes (quarta área). É carregado só quando alguém entra em Tabelas. Favoritos, orçamentos e recentes (`otica_fav`, `otica_orc`, `otica_rec`) são salvos na nuvem; o endereço de atualização dos dados fica só em cada aparelho.
 - A Escala tem uma escala por loja. Funcionários e férias vêm da área Férias (a origem). Quem marca férias em Férias já aparece de férias na Escala.
 
 ## Dados na nuvem (Supabase)
