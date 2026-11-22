@@ -59,15 +59,6 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset
 #ub .pn[hidden]{display:none}
 #nv{position:fixed;left:50%;transform:translateX(-50%);top:calc(60px + env(safe-area-inset-top,0px));z-index:60;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;display:flex;gap:10px;align-items:center;font-size:14px;box-shadow:0 4px 18px rgba(0,0,0,.25)}
 #nv[hidden]{display:none}#nv button{min-height:32px;background:var(--bg);color:var(--ink)}
-#cb{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:58;font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:99px;border:1px solid var(--ln);background:var(--ink);color:var(--bg);cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25)}
-#cp{position:fixed;right:14px;bottom:calc(68px + env(safe-area-inset-bottom,0px));z-index:58;width:min(380px,calc(100vw - 28px));height:min(520px,calc(100vh - 150px));background:var(--sf);border:1px solid var(--ln);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.28);display:flex;flex-direction:column;overflow:hidden}
-#cp .ch{padding:10px 14px;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:15px}#cp .ch small{display:block;font-weight:400;color:var(--mu);font-size:12px}
-#cp .ch button{border:0;background:none;color:var(--mu);font-size:22px;cursor:pointer;line-height:1}
-#cm{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
-#cm div{max-width:88%;padding:8px 12px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4}
-#cm .u{align-self:flex-end;background:var(--ink);color:var(--bg)}#cm .a{align-self:flex-start;background:var(--bg);border:1px solid var(--ln)}#cm .e{align-self:flex-start;color:#b3342b}
-#cf{display:flex;gap:8px;padding:10px;border-top:1px solid var(--ln)}#cf input{flex:1;min-width:0;font:inherit;font-size:15px;padding:0 12px;min-height:42px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--ink)}
-#cf button{font:inherit;min-height:42px;padding:0 14px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);cursor:pointer}
 </style></head><body>
 <div id="auth" hidden><form class="box" id="af" autocomplete="on"><h2>Gestão da Ótica</h2><p id="at">Entre para ver e salvar os dados na nuvem.</p>
 <div><label for="ae">E-mail</label><input id="ae" type="email" required autocomplete="username"></div>
@@ -78,8 +69,6 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset
 <div id="eq" hidden><div class="box" style="max-width:520px"><h2>Equipe</h2><p>Quem pode entrar. Leitor só consulta; editor também altera; administrador também gerencia a equipe.</p><div id="el"></div>
 <div><label for="ee">Adicionar e-mail</label><input id="ee" type="email"></div><div><label for="ep">Papel</label><select id="ep"><option value="leitor">Leitor</option><option value="editor">Editor</option><option value="admin">Administrador</option></select></div>
 <div class="err" id="eer" role="alert"></div><button class="pri" id="ead" type="button">Adicionar</button><button id="ecl" type="button">Fechar</button></div></div>
-<button id="cb" type="button" hidden>💬 Dúvidas</button>
-<div id="cp" hidden role="dialog" aria-label="Assistente de dúvidas"><div class="ch"><span>Assistente de lentes<small>Só consulta as tabelas; não altera nada.</small></span><button type="button" id="cx" aria-label="Fechar">×</button></div><div id="cm"></div><form id="cf" autocomplete="off"><input id="ci" maxlength="600" placeholder="Pergunte sobre lentes e preços…" aria-label="Sua pergunta"><button type="submit" id="cs">Enviar</button></form></div>
 <button id="lg" type="button" hidden>Entrar</button>
 <div id="ub" hidden><div class="pn" id="upn" hidden><b id="uem"></b><span id="upp"></span><button id="ueq" type="button" hidden>Equipe</button><button id="uso" type="button">Sair</button></div><div class="pill"><span id="ust">●</span><button id="ucn" type="button">Conta</button></div></div>
 <div id="nv" hidden><span>Há dados mais novos salvos em outro aparelho. Atualize para ver; o que você digitou aqui antes fica guardado como cópia.</span><button id="nva" type="button">Atualizar</button></div>
@@ -95,7 +84,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset
 </div>
 <p class="note">Os dados ficam salvos na nuvem e aparecem em todos os aparelhos em que você entrar com seu e-mail.</p>
 </main>
-<header id="bar" hidden><button type="button" id="bk">← Início</button><span class="tabs" role="tablist"><button type="button" data-m="caixa">Caixas</button><button type="button" data-m="ferias">Férias</button><button type="button" data-m="escala">Escala</button><button type="button" data-m="tabelas">Tabelas</button><button type="button" data-m="publico">Calendário</button></span><span class="sp"></span></header>
+<header id="bar" hidden><button type="button" id="bk">← Início</button><span class="tabs" role="tablist"><button type="button" data-m="caixa">Caixas</button><button type="button" data-m="ferias">Férias</button><button type="button" data-m="escala">Escala</button><button type="button" data-m="tabelas">Tabelas</button><button type="button" data-m="publico">Calendário de férias</button></span><span class="sp"></span></header>
 <div id="mods" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -110,7 +99,7 @@ if(m==='escala'&&!frames.ferias&&!localStorage.getItem('ferias_v2')){const g=doc
 if(!frames[m]){const f=document.createElement('iframe');f.title=NAMES[m];$('#mods').appendChild(f);frames[m]=f;
 if(EXT[m])fetch(EXT[m]).then(r=>r.ok?r.text():Promise.reject()).then(x=>{f.srcdoc=x.replace('<body>',()=>'<body>'+SHIM)}).catch(()=>{f.srcdoc='<p style="font:16px sans-serif;padding:24px">Não foi possível carregar esta área. Recarregue a página.</p>'});
 else f.srcdoc=MODS[m].replace('<body>',()=>'<body>'+SHIM)}
-Object.keys(frames).forEach(k=>{frames[k].hidden=k!==m});$i('cb').hidden=m!=='tabelas';if(m!=='tabelas')$i('cp').hidden=true;
+Object.keys(frames).forEach(k=>{frames[k].hidden=k!==m});
 document.querySelectorAll('#bar .tabs button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.m===m)))}
 document.querySelectorAll('#bar .tabs button').forEach(b=>b.onclick=()=>{location.hash=b.dataset.m});
 $('#bk').onclick=()=>{location.hash=''};
@@ -184,17 +173,6 @@ $i('ead').onclick=async()=>{const e=$i('ee').value.trim().toLowerCase();if(!e){r
 const Cloud={start(cb){onReady=cb;enter()}};
 const SHIM='<script>(function(){var K=parent.__SYNCKEYS,o=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);try{if(this===localStorage&&K.indexOf(k)>-1)parent.__cloudSet(k,v)}catch(e){}}})()<\/script>';
 
-/* ---- assistente de dúvidas (só consulta as Tabelas; função Netlify /chat) ---- */
-const hist=[];function bolha(c,t){const d=document.createElement('div');d.className=c;d.textContent=t;$i('cm').appendChild(d);$i('cm').scrollTop=1e9;return d}
-$i('cb').onclick=()=>{const p=$i('cp');p.hidden=!p.hidden;if(!p.hidden){if(!$i('cm').children.length)bolha('a','Oi! Pergunte sobre lentes, preços, índices e tratamentos. Eu só consulto as tabelas e não altero nada.');$i('ci').focus()}};
-$i('cx').onclick=()=>{$i('cp').hidden=true};
-$i('cf').onsubmit=async ev=>{ev.preventDefault();const q=$i('ci').value.trim();if(!q)return;$i('ci').value='';bolha('u',q);hist.push({role:'user',content:q});
-const w=bolha('a','…');$i('cs').disabled=true;
-try{const r=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:hist.slice(-10)})});
-let j={};try{j=await r.json()}catch(e){}
-if(r.ok&&j.resposta){w.textContent=j.resposta;hist.push({role:'assistant',content:j.resposta})}else{w.className='e';w.textContent=j.erro||'O assistente só funciona no site publicado.';hist.pop()}}
-catch(e){w.className='e';w.textContent='Sem conexão com o assistente. Tente de novo.';hist.pop()}
-$i('cs').disabled=false;$i('cm').scrollTop=1e9};
 Cloud.start(show);
 </script>
 </body></html>
