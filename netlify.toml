@@ -1,2 +1,9 @@
 [build]
   publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions.chat]
+  included_files = ["netlify/functions/data/**"]

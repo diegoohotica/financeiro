@@ -30,3 +30,10 @@ Site de um arquivo só (`index.html`), sem instalação. A página inicial leva 
 
 - A leitura de fotos (JPG) no Caixas só funciona dentro do Claude. PDF e Excel funcionam normalmente.
 - Se dois aparelhos editarem a mesma área ao mesmo tempo, vale o último a salvar. Um aviso aparece quando há dados novos de outro aparelho.
+
+## Assistente de dúvidas (Tabelas)
+
+Botão "Dúvidas" na área Tabelas. Função Netlify `netlify/functions/chat.mjs`: só consulta `data/lentes.json` e `data/guia.json`
+(gerados por `python3 tools/gerar_dados_chat.py` a partir de `tabelas/index.html`; rode de novo quando as tabelas mudarem).
+Não grava nem altera nada. Precisa da variável de ambiente `ANTHROPIC_API_KEY` no Netlify (opcional: `CHAT_MODEL`).
+Limites: 15 perguntas/10 min por pessoa, 400/hora no total, respostas curtas. Defina também um limite de gasto no console da Anthropic.
